@@ -7,6 +7,9 @@ import (
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 	"github.com/vmware-tanzu/octant/pkg/store"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"log"
 	"strconv"
@@ -39,7 +42,24 @@ func handleTab(request *service.PrintRequest) (plugin.TabResponse, error) {
 		return plugin.TabResponse{}, errors.New("object is nil")
 	}
 
-	tab := createVulnerabilitiesTab()
+	pod := request.Object.(*unstructured.Unstructured)
+	containers, _, _ := unstructured.NestedSlice(pod.Object, "spec", "containers")
+	container := containers[0].(map[string]interface{})
+	image, _, _ := unstructured.NestedString(container, "image")
+
+	client := request.DashboardClient
+	ul, err := client.List(request.Context(), store.Key{
+		APIVersion: "security.danielpacak.github.com/v1",
+		Kind:       "Vulnerability",
+		Selector: &labels.Set{
+			"image-ref": image,
+		},
+	})
+	if err != nil {
+		return plugin.TabResponse{}, err
+	}
+
+	tab := createVulnerabilitiesTab(request.Object, ul)
 
 	return plugin.TabResponse{Tab: tab}, nil
 }
@@ -52,18 +72,24 @@ type VulnerabilityItem struct {
 	FixedVersion     string
 }
 
-func createVulnerabilitiesTab() *component.Tab {
+func createVulnerabilitiesTab(obj runtime.Object, ul *unstructured.UnstructuredList) *component.Tab {
+	pod := obj.(*unstructured.Unstructured)
+	containers, _, _ := unstructured.NestedSlice(pod.Object, "spec", "containers")
+	container := containers[0].(map[string]interface{})
+	image, _, _ := unstructured.NestedString(container, "image")
+
 	header := component.NewMarkdownText(fmt.Sprintf(`## Vulnerabilities
 
 Imagine that we list all containers and show vulnerabilities found by _Trivy_ operator.
-`))
+
+%v`, image))
 
 	table := component.NewTableWithRows(
 		"Vulnerabilities", "There are no vulnerabilities!",
 		component.NewTableCols("ID", "Severity", "Package", "Installed Version", "Fixed Version"),
 		[]component.TableRow{})
 
-	vulnerabilityItems := getVulnerabilityItems()
+	vulnerabilityItems := getVulnerabilityItems(ul)
 	for _, vi := range vulnerabilityItems {
 		tr := component.TableRow{
 			"ID":                component.NewLink(vi.ID, vi.ID, "http://somewhere.com"),
@@ -86,23 +112,39 @@ Imagine that we list all containers and show vulnerabilities found by _Trivy_ op
 	return component.NewTabWithContents(*flexLayout)
 }
 
-func getVulnerabilityItems() []VulnerabilityItem {
-	return []VulnerabilityItem{
-		{
-			ID:               "CVE-1038-2018",
-			Severity:         "CRITICAL",
-			Package:          "openssl",
-			InstalledVersion: "2.4.2",
-			FixedVersion:     "2.4.3-rc2",
-		},
-		{
-			ID:               "CVE-1008-1346",
-			Severity:         "HIGH",
-			Package:          "wget",
-			InstalledVersion: "1.3",
-			FixedVersion:     "1.3-a",
-		},
+func getVulnerabilityItems(ul *unstructured.UnstructuredList) []VulnerabilityItem {
+	var items []VulnerabilityItem
+
+	for _, ui := range ul.Items {
+		vulnerabilityId, _, err := unstructured.NestedString(ui.Object, "spec", "vulnerabilityId")
+		if err != nil {
+			continue
+		}
+		installedVersion, _, err := unstructured.NestedString(ui.Object, "spec", "installedVersion")
+		if err != nil {
+			continue
+		}
+		fixedVersion, _, err := unstructured.NestedString(ui.Object, "spec", "fixedVersion")
+		if err != nil {
+			continue
+		}
+		severity, _, err := unstructured.NestedString(ui.Object, "spec", "severity")
+		if err != nil {
+			continue
+		}
+		resource, _, err := unstructured.NestedString(ui.Object, "spec", "resource")
+		if err != nil {
+			continue
+		}
+		items = append(items, VulnerabilityItem{
+			ID:               vulnerabilityId,
+			Severity:         severity,
+			Package:          resource,
+			InstalledVersion: installedVersion,
+			FixedVersion:     fixedVersion,
+		})
 	}
+	return items
 }
 
 // handlePrint is called when Octant wants to print an object.
