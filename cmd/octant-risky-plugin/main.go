@@ -24,13 +24,13 @@ func main() {
 	capabilities := &plugin.Capabilities{
 		SupportsTab:           []schema.GroupVersionKind{podGVK},
 		SupportsPrinterConfig: []schema.GroupVersionKind{podGVK},
-		IsModule:              true,
+		IsModule:              false,
 	}
 	options := []service.PluginOption{
 		service.WithTabPrinter(handleTab),
 		service.WithPrinter(handlePrint),
 	}
-	p, err := service.Register("terra-nova", "A terra-nova plugin", capabilities, options...)
+	p, err := service.Register("risky", "Kubernetes-native risk explorer plugin", capabilities, options...)
 	if err != nil {
 		log.Fatal(err)
 	}
