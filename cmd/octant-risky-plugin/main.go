@@ -116,7 +116,7 @@ func getVulnerabilityItems(ul *unstructured.UnstructuredList) []VulnerabilityIte
 	var items []VulnerabilityItem
 
 	for _, ui := range ul.Items {
-		vulnerabilityId, _, err := unstructured.NestedString(ui.Object, "spec", "vulnerabilityId")
+		vulnerabilityId, _, err := unstructured.NestedString(ui.Object, "spec", "vulnerabilityID")
 		if err != nil {
 			continue
 		}
