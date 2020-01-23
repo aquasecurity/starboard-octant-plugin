@@ -1,4 +1,4 @@
-module github.com/danielpacak/octant-terra-nova
+module github.com/danielpacak/octant-risky-plugin
 
 go 1.13
 
