@@ -1,17 +1,16 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	secv1 "github.com/danielpacak/k8s-security-crds/pkg/apis/security/v1"
+	security "github.com/danielpacak/k8s-security-crds/pkg/apis/security/v1"
+	"github.com/danielpacak/octant-risky-plugin/pkg/data"
+	"github.com/danielpacak/octant-risky-plugin/pkg/view"
 	"github.com/pkg/errors"
 	"github.com/vmware-tanzu/octant/pkg/plugin"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 	"github.com/vmware-tanzu/octant/pkg/store"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"log"
 	"strconv"
@@ -50,85 +49,27 @@ func handleTab(request *service.PrintRequest) (plugin.TabResponse, error) {
 	container := containers[0].(map[string]interface{})
 	image, _, _ := unstructured.NestedString(container, "image")
 
-	client := request.DashboardClient
-	ul, err := client.List(request.Context(), store.Key{
-		APIVersion: "security.danielpacak.github.com/v1",
-		Kind:       "ImageScanReport",
-		Selector: &labels.Set{
-			"image-ref": image,
-		},
-	})
+	repository := data.NewRepository(request.DashboardClient)
+	report, err := repository.GetImageScanReportFor(request.Context(), image)
 	if err != nil {
 		return plugin.TabResponse{}, err
 	}
 
-	tab := createVulnerabilitiesTab(request.Object, ul)
+	tab := createVulnerabilitiesTab(report)
 
 	return plugin.TabResponse{Tab: tab}, nil
 }
 
-func createVulnerabilitiesTab(obj runtime.Object, ul *unstructured.UnstructuredList) *component.Tab {
-	pod := obj.(*unstructured.Unstructured)
-	containers, _, _ := unstructured.NestedSlice(pod.Object, "spec", "containers")
-	container := containers[0].(map[string]interface{})
-	image, _, _ := unstructured.NestedString(container, "image")
-
-	header := component.NewMarkdownText(fmt.Sprintf(`## Vulnerabilities
-
-Imagine that we list all containers and show vulnerabilities found by _Trivy_ operator.
-
-%v`, image))
-
-	table := component.NewTableWithRows(
-		"Vulnerabilities", "There are no vulnerabilities!",
-		component.NewTableCols("ID", "Severity", "Title", "Resource", "Installed Version", "Fixed Version"),
-		[]component.TableRow{})
-
-	vulnerabilityItems, _ := getVulnerabilities(ul)
-	for _, vi := range vulnerabilityItems {
-		tr := component.TableRow{
-			"ID":                getLinkComponent(vi),
-			"Severity":          component.NewText(vi.Severity),
-			"Title":             component.NewText(vi.Title),
-			"Resource":          component.NewText(vi.Resource),
-			"Installed Version": component.NewText(vi.InstalledVersion),
-			"Fixed Version":     component.NewText(vi.FixedVersion),
-		}
-		table.Add(tr)
-	}
-
-	table.Sort("ID", false)
-
+func createVulnerabilitiesTab(report *security.ImageScanReport) *component.Tab {
 	flexLayout := component.NewFlexLayout("Vulnerabilities")
 	flexLayout.AddSections(component.FlexLayoutSection{
-		{Width: component.WidthFull, View: header},
-		{Width: component.WidthFull, View: table},
+		{
+			Width: component.WidthFull,
+			View:  view.NewImageScanReport(report),
+		},
 	})
 
 	return component.NewTabWithContents(*flexLayout)
-}
-
-func getLinkComponent(vi secv1.VulnerabilitySpec) component.Component {
-	if len(vi.Links) > 0 {
-		return component.NewLink(vi.VulnerabilityID, vi.VulnerabilityID, vi.Links[0])
-	}
-	return component.NewText(vi.VulnerabilityID)
-}
-
-func getVulnerabilities(ul *unstructured.UnstructuredList) (list []secv1.VulnerabilitySpec, err error) {
-	b, err := ul.MarshalJSON()
-	if err != nil {
-		return list, err
-	}
-	var vl secv1.ImageScanReportList
-	err = json.Unmarshal(b, &vl)
-	if err != nil {
-		return list, err
-	}
-	for _, i := range vl.Items[0].Spec.Vulnerabilities {
-		list = append(list, i)
-	}
-	return list, nil
 }
 
 // handlePrint is called when Octant wants to print an object.
@@ -145,7 +86,7 @@ func handlePrint(request *service.PrintRequest) (plugin.PrintResponse, error) {
 	if err != nil {
 		return plugin.PrintResponse{}, err
 	}
-	u, found, err := request.DashboardClient.Get(request.Context(), key)
+	_, found, err := request.DashboardClient.Get(request.Context(), key)
 	if err != nil {
 		return plugin.PrintResponse{}, err
 	}
@@ -155,12 +96,13 @@ func handlePrint(request *service.PrintRequest) (plugin.PrintResponse, error) {
 		return plugin.PrintResponse{}, errors.New("object doesn't exist")
 	}
 
-	// Octant has a component library that can be used to build content for a plugin.
-	// In this case, the plugin is creating a card.
-	podCard := component.NewCard([]component.TitleComponent{component.NewText(fmt.Sprintf("Extra Output for %s", u.GetName()))})
-	podCard.SetBody(component.NewMarkdownText("This output was generated from _octant-sample-plugin_"))
+	repository := data.NewRepository(request.DashboardClient)
+	report, err := repository.GetDescriptorScanReportFor(request.Context(), "nginx")
+	if err != nil {
+		return plugin.PrintResponse{}, err
+	}
 
-	msg := fmt.Sprintf("%s", time.Now().Format(time.RFC3339))
+	dsrComponent := view.NewDescriptorScanReport(report)
 
 	// When printing an object, you can create multiple types of content. In this
 	// example, the plugin is:
@@ -171,7 +113,7 @@ func handlePrint(request *service.PrintRequest) (plugin.PrintResponse, error) {
 	//   summary section for the component.
 	return plugin.PrintResponse{
 		Config: []component.SummarySection{
-			{Header: "Last Scanned At", Content: component.NewText(msg)},
+			{Header: "Last Scanned At", Content: component.NewText(fmt.Sprintf("%s", time.Now().Format(time.RFC3339)))},
 		},
 		Status: []component.SummarySection{
 			{Header: "Critical Severity Vulnerabilities", Content: component.NewText(strconv.Itoa(15))},
@@ -182,7 +124,7 @@ func handlePrint(request *service.PrintRequest) (plugin.PrintResponse, error) {
 		Items: []component.FlexLayoutItem{
 			{
 				Width: component.WidthHalf,
-				View:  podCard,
+				View:  dsrComponent,
 			},
 		},
 	}, nil
