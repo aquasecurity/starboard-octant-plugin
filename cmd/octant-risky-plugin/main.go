@@ -43,11 +43,12 @@ func handleTab(request *service.PrintRequest) (plugin.TabResponse, error) {
 		return plugin.TabResponse{}, errors.New("object is nil")
 	}
 
-	// TODO Parse it to Pod
-	pod := request.Object.(*unstructured.Unstructured)
-	containers, _, _ := unstructured.NestedSlice(pod.Object, "spec", "containers")
-	container := containers[0].(map[string]interface{})
-	image, _, _ := unstructured.NestedString(container, "image")
+	pod, err := data.UnstructuredToPod(request.Object.(*unstructured.Unstructured))
+	if err != nil {
+		return plugin.TabResponse{}, err
+	}
+
+	image := pod.Spec.Containers[0].Image
 
 	repository := data.NewRepository(request.DashboardClient)
 	report, err := repository.GetImageScanReportFor(request.Context(), image)
