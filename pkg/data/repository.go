@@ -8,8 +8,18 @@ import (
 	"github.com/vmware-tanzu/octant/pkg/store"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/labels"
 )
+
+type GetImageScanReportOptions struct {
+	Kind      string
+	Name      string
+	Container string
+}
+
+type GetDescriptorScanReportOptions struct {
+	Kind string
+	Name string
+}
 
 type Repository struct {
 	client service.Dashboard
@@ -21,13 +31,15 @@ func NewRepository(client service.Dashboard) *Repository {
 	}
 }
 
-func (r *Repository) GetImageScanReportFor(ctx context.Context, imageRef string) (*security.ImageScanReport, error) {
+func (r *Repository) GetImageScanReportFor(ctx context.Context, options GetImageScanReportOptions) (*security.ImageScanReport, error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
 		APIVersion: "security.danielpacak.github.com/v1",
 		Kind:       "ImageScanReport",
-		Selector: &labels.Set{
-			"image-ref": imageRef,
-		},
+		//Selector: &labels.Set{
+		//	"risky.workload.kind":  options.Kind,
+		//	"risky.workload.name":  options.Name,
+		//	"risky.container.name": options.Container,
+		//},
 	})
 	if err != nil {
 		return nil, err
@@ -41,19 +53,29 @@ func (r *Repository) GetImageScanReportFor(ctx context.Context, imageRef string)
 	if err != nil {
 		return nil, err
 	}
-	if len(reportList.Items) == 0 {
+	var reports []security.ImageScanReport
+	for _, i := range reportList.Items {
+		if i.Labels["risky.workload.kind"] == options.Kind &&
+			i.Labels["risky.workload.name"] == options.Name {
+			reports = append(reports, i)
+		}
+	}
+
+	if len(reports) == 0 {
 		return nil, nil
 	}
-	return &reportList.Items[0], nil
+
+	return &reports[0], nil
 }
 
-func (r *Repository) GetDescriptorScanReportFor(ctx context.Context, imageRef string) (*security.DescriptorScanReport, error) {
+func (r *Repository) GetDescriptorScanReportFor(ctx context.Context, options GetDescriptorScanReportOptions) (*security.DescriptorScanReport, error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
 		APIVersion: "security.danielpacak.github.com/v1",
 		Kind:       "DescriptorScanReport",
-		Selector: &labels.Set{
-			"image-ref": imageRef,
-		},
+		//Selector: &labels.Set{
+		//	"risky.workload.kind":  options.Kind,
+		//	"risky.workload.name":  options.Name,
+		//},
 	})
 	if err != nil {
 		return nil, err
@@ -67,10 +89,17 @@ func (r *Repository) GetDescriptorScanReportFor(ctx context.Context, imageRef st
 	if err != nil {
 		return nil, err
 	}
-	if len(reportList.Items) == 0 {
+	var reports []security.DescriptorScanReport
+	for _, i := range reportList.Items {
+		if i.Labels["risky.workload.kind"] == options.Kind &&
+			i.Labels["risky.workload.name"] == options.Name {
+			reports = append(reports, i)
+		}
+	}
+	if len(reports) == 0 {
 		return nil, nil
 	}
-	return &reportList.Items[0], nil
+	return &reports[0], nil
 }
 
 func UnstructuredToPod(u *unstructured.Unstructured) (core.Pod, error) {

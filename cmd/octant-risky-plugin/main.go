@@ -48,10 +48,12 @@ func handleTab(request *service.PrintRequest) (plugin.TabResponse, error) {
 		return plugin.TabResponse{}, err
 	}
 
-	image := pod.Spec.Containers[0].Image
-
 	repository := data.NewRepository(request.DashboardClient)
-	report, err := repository.GetImageScanReportFor(request.Context(), image)
+	report, err := repository.GetImageScanReportFor(request.Context(), data.GetImageScanReportOptions{
+		Kind:      "Pod",
+		Name:      pod.Name,
+		Container: pod.Spec.Containers[0].Name,
+	})
 	if err != nil {
 		return plugin.TabResponse{}, err
 	}
@@ -87,7 +89,7 @@ func handlePrint(request *service.PrintRequest) (plugin.PrintResponse, error) {
 	if err != nil {
 		return plugin.PrintResponse{}, err
 	}
-	_, found, err := request.DashboardClient.Get(request.Context(), key)
+	unstructuredPod, found, err := request.DashboardClient.Get(request.Context(), key)
 	if err != nil {
 		return plugin.PrintResponse{}, err
 	}
@@ -98,12 +100,17 @@ func handlePrint(request *service.PrintRequest) (plugin.PrintResponse, error) {
 	}
 
 	repository := data.NewRepository(request.DashboardClient)
-	report, err := repository.GetDescriptorScanReportFor(request.Context(), "nginx")
+	report, err := repository.GetDescriptorScanReportFor(request.Context(), data.GetDescriptorScanReportOptions{
+		Kind: "Pod",
+		Name: unstructuredPod.GetName(),
+	})
 	if err != nil {
 		return plugin.PrintResponse{}, err
 	}
 
 	dsrComponent := view.NewDescriptorScanReport(report)
+
+	debugComponent := view.NewDebug(`THIS IS TEST`)
 
 	// When printing an object, you can create multiple types of content. In this
 	// example, the plugin is:
@@ -126,6 +133,10 @@ func handlePrint(request *service.PrintRequest) (plugin.PrintResponse, error) {
 			{
 				Width: component.WidthHalf,
 				View:  dsrComponent,
+			},
+			{
+				Width: component.WidthHalf,
+				View:  debugComponent,
 			},
 		},
 	}, nil
