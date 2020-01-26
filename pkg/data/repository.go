@@ -8,15 +8,11 @@ import (
 	"github.com/vmware-tanzu/octant/pkg/store"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"sort"
+	"strings"
 )
 
-type GetImageScanReportOptions struct {
-	Kind      string
-	Name      string
-	Container string
-}
-
-type GetDescriptorScanReportOptions struct {
+type Workload struct {
 	Kind string
 	Name string
 }
@@ -31,7 +27,12 @@ func NewRepository(client service.Dashboard) *Repository {
 	}
 }
 
-func (r *Repository) GetImageScanReportFor(ctx context.Context, options GetImageScanReportOptions) (*security.ImageScanReport, error) {
+type ContainerImageScanReport struct {
+	Name   string
+	Report security.ImageScanReport
+}
+
+func (r *Repository) GetImageScanReports(ctx context.Context, options Workload) ([]ContainerImageScanReport, error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
 		APIVersion: "security.danielpacak.github.com/v1",
 		Kind:       "ImageScanReport",
@@ -53,22 +54,27 @@ func (r *Repository) GetImageScanReportFor(ctx context.Context, options GetImage
 	if err != nil {
 		return nil, err
 	}
-	var reports []security.ImageScanReport
+	var reports []ContainerImageScanReport
 	for _, i := range reportList.Items {
+		containerName, containerNameSpecified := i.Labels["risky.container.name"]
 		if i.Labels["risky.workload.kind"] == options.Kind &&
-			i.Labels["risky.workload.name"] == options.Name {
-			reports = append(reports, i)
+			i.Labels["risky.workload.name"] == options.Name &&
+			containerNameSpecified {
+			reports = append(reports, ContainerImageScanReport{
+				Name:   containerName,
+				Report: i,
+			})
 		}
 	}
 
-	if len(reports) == 0 {
-		return nil, nil
-	}
+	sort.SliceStable(reports, func(i, j int) bool {
+		return strings.Compare(reports[i].Name, reports[j].Name) < 0
+	})
 
-	return &reports[0], nil
+	return reports, nil
 }
 
-func (r *Repository) GetDescriptorScanReportFor(ctx context.Context, options GetDescriptorScanReportOptions) (*security.DescriptorScanReport, error) {
+func (r *Repository) GetDescriptorScanReportFor(ctx context.Context, options Workload) (*security.DescriptorScanReport, error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
 		APIVersion: "security.danielpacak.github.com/v1",
 		Kind:       "DescriptorScanReport",

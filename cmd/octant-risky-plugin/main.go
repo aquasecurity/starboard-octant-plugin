@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	security "github.com/danielpacak/k8s-security-crds/pkg/apis/security/v1"
 	"github.com/danielpacak/octant-risky-plugin/pkg/data"
 	"github.com/danielpacak/octant-risky-plugin/pkg/view"
 	"github.com/pkg/errors"
@@ -49,28 +48,30 @@ func handleTab(request *service.PrintRequest) (plugin.TabResponse, error) {
 	}
 
 	repository := data.NewRepository(request.DashboardClient)
-	report, err := repository.GetImageScanReportFor(request.Context(), data.GetImageScanReportOptions{
-		Kind:      "Pod",
-		Name:      pod.Name,
-		Container: pod.Spec.Containers[0].Name,
+	reports, err := repository.GetImageScanReports(request.Context(), data.Workload{
+		Kind: "Pod",
+		Name: pod.Name,
 	})
 	if err != nil {
 		return plugin.TabResponse{}, err
 	}
 
-	tab := createVulnerabilitiesTab(report)
+	tab := createVulnerabilitiesTab(reports)
 
 	return plugin.TabResponse{Tab: tab}, nil
 }
 
-func createVulnerabilitiesTab(report *security.ImageScanReport) *component.Tab {
+func createVulnerabilitiesTab(reports []data.ContainerImageScanReport) *component.Tab {
 	flexLayout := component.NewFlexLayout("Vulnerabilities")
-	flexLayout.AddSections(component.FlexLayoutSection{
-		{
+	var items []component.FlexLayoutItem
+	for _, containerReport := range reports {
+		items = append(items, component.FlexLayoutItem{
 			Width: component.WidthFull,
-			View:  view.NewImageScanReport(report),
-		},
-	})
+			View:  view.NewImageScanReport(containerReport.Name, containerReport.Report),
+		})
+	}
+
+	flexLayout.AddSections(items)
 
 	return component.NewTabWithContents(*flexLayout)
 }
@@ -100,7 +101,7 @@ func handlePrint(request *service.PrintRequest) (plugin.PrintResponse, error) {
 	}
 
 	repository := data.NewRepository(request.DashboardClient)
-	report, err := repository.GetDescriptorScanReportFor(request.Context(), data.GetDescriptorScanReportOptions{
+	report, err := repository.GetDescriptorScanReportFor(request.Context(), data.Workload{
 		Kind: "Pod",
 		Name: unstructuredPod.GetName(),
 	})
