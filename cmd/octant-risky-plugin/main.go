@@ -109,9 +109,17 @@ func handlePrint(request *service.PrintRequest) (plugin.PrintResponse, error) {
 		return plugin.PrintResponse{}, err
 	}
 
-	dsrComponent := view.NewDescriptorScanReport(report)
-
-	debugComponent := view.NewDebug(`THIS IS TEST`)
+	var printItems []component.FlexLayoutItem
+	if report != nil {
+		printItems = append(printItems, component.FlexLayoutItem{
+			Width: component.WidthHalf,
+			View:  view.NewDescriptorScanReport(report),
+		})
+	}
+	printItems = append(printItems, component.FlexLayoutItem{
+		Width: component.WidthHalf,
+		View:  view.NewDebug("THIS IS A TEST"),
+	})
 
 	// When printing an object, you can create multiple types of content. In this
 	// example, the plugin is:
@@ -130,15 +138,6 @@ func handlePrint(request *service.PrintRequest) (plugin.PrintResponse, error) {
 			{Header: "Medium Severity Vulnerabilities", Content: component.NewText(strconv.Itoa(7))},
 			{Header: "Low Severity Vulnerabilities", Content: component.NewText(strconv.Itoa(1))},
 		},
-		Items: []component.FlexLayoutItem{
-			{
-				Width: component.WidthHalf,
-				View:  dsrComponent,
-			},
-			{
-				Width: component.WidthHalf,
-				View:  debugComponent,
-			},
-		},
+		Items: printItems,
 	}, nil
 }
