@@ -112,7 +112,7 @@ func handlePrint(request *service.PrintRequest) (plugin.PrintResponse, error) {
 	var printItems []component.FlexLayoutItem
 	if report != nil {
 		printItems = append(printItems, component.FlexLayoutItem{
-			Width: component.WidthHalf,
+			Width: component.WidthFull,
 			View:  view.NewDescriptorScanReport(report),
 		})
 	}

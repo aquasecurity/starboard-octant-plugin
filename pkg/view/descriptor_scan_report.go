@@ -11,14 +11,14 @@ func NewDescriptorScanReport(report *security.DescriptorScanReport) component.Co
 
 	flexLayout.AddSections([]component.FlexLayoutItem{{
 		Width: component.WidthFull,
-		View:  NewChecksReport("Pod Spec:", report.Spec.Pod),
+		View:  NewChecksReport("Pod Spec", report.Spec.Pod),
 	}})
 
 	var items []component.FlexLayoutItem
 	for _, containerReport := range report.Spec.Containers {
 		items = append(items, component.FlexLayoutItem{
 			Width: component.WidthFull,
-			View:  NewChecksReport(fmt.Sprintf("Container: %s", containerReport.Name), containerReport.Checks),
+			View:  NewChecksReport(fmt.Sprintf("Container %s", containerReport.Name), containerReport.Checks),
 		})
 	}
 
@@ -31,7 +31,7 @@ func NewChecksReport(name string, checks []security.DescriptorCheck) component.C
 	table := component.NewTableWithRows(
 		name,
 		"Descriptor scan report",
-		component.NewTableCols("CheckID", "Severity", "Description"),
+		component.NewTableCols("CheckID", "Severity", "Description", "Result"),
 		[]component.TableRow{})
 
 	for _, check := range checks {
@@ -39,6 +39,7 @@ func NewChecksReport(name string, checks []security.DescriptorCheck) component.C
 			"CheckID":     component.NewText(check.CheckID),
 			"Severity":    component.NewText(check.Severity),
 			"Description": component.NewText(check.Description),
+			"Result":      component.NewText(check.Result),
 		})
 	}
 
