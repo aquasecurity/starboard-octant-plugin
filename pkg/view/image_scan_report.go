@@ -5,8 +5,26 @@ import (
 	security "github.com/danielpacak/k8s-security-crds/pkg/apis/security/v1"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 	"sort"
-	"strings"
 )
+
+type Severity int
+
+const (
+	_ Severity = iota
+	SeverityUnknown
+	SeverityLow
+	SeverityMedium
+	SeverityHigh
+	SeverityCritical
+)
+
+var stringToSeverity = map[string]Severity{
+	"UNKNOWN":  SeverityUnknown,
+	"LOW":      SeverityLow,
+	"MEDIUM":   SeverityMedium,
+	"HIGH":     SeverityHigh,
+	"CRITICAL": SeverityCritical,
+}
 
 func NewImageScanReport(containerName string, report security.ImageScanReport) component.Component {
 	table := component.NewTableWithRows(
@@ -17,7 +35,17 @@ func NewImageScanReport(containerName string, report security.ImageScanReport) c
 	vulnerabilities := report.Spec.Vulnerabilities
 
 	sort.SliceStable(vulnerabilities, func(i, j int) bool {
-		return strings.Compare(vulnerabilities[i].Severity, vulnerabilities[j].Severity) < 0
+		var a, b Severity
+		a, ok := stringToSeverity[vulnerabilities[i].Severity]
+		if !ok {
+			a = SeverityUnknown
+		}
+		b, ok = stringToSeverity[vulnerabilities[j].Severity]
+		if !ok {
+			b = SeverityUnknown
+		}
+
+		return a > b
 	})
 
 	for _, vi := range report.Spec.Vulnerabilities {
