@@ -32,6 +32,38 @@ type ContainerImageScanReport struct {
 	Report security.ImageScanReport
 }
 
+type VulnerabilitiesSummary struct {
+	CriticalCount int
+	HighCount     int
+	MediumCount   int
+	LowCount      int
+	UnknownCount  int
+}
+
+func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options Workload) (vs VulnerabilitiesSummary, err error) {
+	containerReports, err := r.GetImageScanReports(ctx, options)
+	if err != nil {
+		return vs, err
+	}
+	for _, cr := range containerReports {
+		for _, v := range cr.Report.Spec.Vulnerabilities {
+			switch v.Severity {
+			case "CRITICAL":
+				vs.CriticalCount++
+			case "HIGH":
+				vs.HighCount++
+			case "MEDIUM":
+				vs.MediumCount++
+			case "LOW":
+				vs.LowCount++
+			default:
+				vs.UnknownCount++
+			}
+		}
+	}
+	return
+}
+
 func (r *Repository) GetImageScanReports(ctx context.Context, options Workload) ([]ContainerImageScanReport, error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
 		APIVersion: "security.danielpacak.github.com/v1",

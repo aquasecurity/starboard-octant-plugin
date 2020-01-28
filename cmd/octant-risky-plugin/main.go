@@ -121,6 +121,23 @@ func handlePrint(request *service.PrintRequest) (plugin.PrintResponse, error) {
 		View:  view.NewDebug("THIS IS A TEST"),
 	})
 
+	summary, err := repository.GetVulnerabilitiesSummary(request.Context(), data.Workload{
+		Kind: "Pod",
+		Name: unstructuredPod.GetName(),
+	})
+	if err != nil {
+		return plugin.PrintResponse{}, err
+	}
+
+	vs := component.NewSummary("Vulnerabilities",
+		summarySectionsFor(summary)...,
+	)
+
+	printItems = append(printItems, component.FlexLayoutItem{
+		Width: component.WidthHalf,
+		View:  vs,
+	})
+
 	// When printing an object, you can create multiple types of content. In this
 	// example, the plugin is:
 	//
@@ -132,12 +149,17 @@ func handlePrint(request *service.PrintRequest) (plugin.PrintResponse, error) {
 		Config: []component.SummarySection{
 			{Header: "Last Scanned At", Content: component.NewText(fmt.Sprintf("%s", time.Now().Format(time.RFC3339)))},
 		},
-		Status: []component.SummarySection{
-			{Header: "Critical Severity Vulnerabilities", Content: component.NewText(strconv.Itoa(15))},
-			{Header: "High Severity Vulnerabilities", Content: component.NewText(strconv.Itoa(3))},
-			{Header: "Medium Severity Vulnerabilities", Content: component.NewText(strconv.Itoa(7))},
-			{Header: "Low Severity Vulnerabilities", Content: component.NewText(strconv.Itoa(1))},
-		},
-		Items: printItems,
+		Status: summarySectionsFor(summary),
+		Items:  printItems,
 	}, nil
+}
+
+func summarySectionsFor(summary data.VulnerabilitiesSummary) []component.SummarySection {
+	return []component.SummarySection{
+		{Header: "Critical Vulnerabilities", Content: component.NewText(strconv.Itoa(summary.CriticalCount))},
+		{Header: "High Vulnerabilities", Content: component.NewText(strconv.Itoa(summary.HighCount))},
+		{Header: "Medium Vulnerabilities", Content: component.NewText(strconv.Itoa(summary.MediumCount))},
+		{Header: "Low Vulnerabilities", Content: component.NewText(strconv.Itoa(summary.LowCount))},
+		{Header: "Unknown Vulnerabilities", Content: component.NewText(strconv.Itoa(summary.UnknownCount))},
+	}
 }
