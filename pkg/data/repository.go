@@ -3,7 +3,7 @@ package data
 import (
 	"context"
 	"encoding/json"
-	security "github.com/danielpacak/k8s-security-crds/pkg/apis/security/v1"
+	security "github.com/aquasecurity/k8s-security-crds/pkg/apis/security/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 	"github.com/vmware-tanzu/octant/pkg/store"
 	core "k8s.io/api/core/v1"
@@ -32,15 +32,7 @@ type ContainerImageScanReport struct {
 	Report security.ImageScanReport
 }
 
-type VulnerabilitiesSummary struct {
-	CriticalCount int
-	HighCount     int
-	MediumCount   int
-	LowCount      int
-	UnknownCount  int
-}
-
-func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options Workload) (vs VulnerabilitiesSummary, err error) {
+func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options Workload) (vs security.VulnerabilitiesSummary, err error) {
 	containerReports, err := r.GetImageScanReports(ctx, options)
 	if err != nil {
 		return vs, err
@@ -48,13 +40,13 @@ func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options Work
 	for _, cr := range containerReports {
 		for _, v := range cr.Report.Spec.Vulnerabilities {
 			switch v.Severity {
-			case "CRITICAL":
+			case security.SeverityCritical:
 				vs.CriticalCount++
-			case "HIGH":
+			case security.SeverityHigh:
 				vs.HighCount++
-			case "MEDIUM":
+			case security.SeverityMedium:
 				vs.MediumCount++
-			case "LOW":
+			case security.SeverityLow:
 				vs.LowCount++
 			default:
 				vs.UnknownCount++
@@ -66,7 +58,7 @@ func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options Work
 
 func (r *Repository) GetImageScanReports(ctx context.Context, options Workload) ([]ContainerImageScanReport, error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
-		APIVersion: "security.danielpacak.github.com/v1",
+		APIVersion: "security.aquasecurity.github.com/v1",
 		Kind:       "ImageScanReport",
 		//Selector: &labels.Set{
 		//	"risky.workload.kind":  options.Kind,
@@ -104,40 +96,6 @@ func (r *Repository) GetImageScanReports(ctx context.Context, options Workload) 
 	})
 
 	return reports, nil
-}
-
-func (r *Repository) GetDescriptorScanReportFor(ctx context.Context, options Workload) (*security.DescriptorScanReport, error) {
-	unstructuredList, err := r.client.List(ctx, store.Key{
-		APIVersion: "security.danielpacak.github.com/v1",
-		Kind:       "DescriptorScanReport",
-		//Selector: &labels.Set{
-		//	"risky.workload.kind":  options.Kind,
-		//	"risky.workload.name":  options.Name,
-		//},
-	})
-	if err != nil {
-		return nil, err
-	}
-	b, err := unstructuredList.MarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	var reportList security.DescriptorScanReportList
-	err = json.Unmarshal(b, &reportList)
-	if err != nil {
-		return nil, err
-	}
-	var reports []security.DescriptorScanReport
-	for _, i := range reportList.Items {
-		if i.Labels["risky.workload.kind"] == options.Kind &&
-			i.Labels["risky.workload.name"] == options.Name {
-			reports = append(reports, i)
-		}
-	}
-	if len(reports) == 0 {
-		return nil, nil
-	}
-	return &reports[0], nil
 }
 
 func UnstructuredToPod(u *unstructured.Unstructured) (core.Pod, error) {
