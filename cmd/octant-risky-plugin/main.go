@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/danielpacak/octant-risky-plugin/pkg/data"
-	"github.com/danielpacak/octant-risky-plugin/pkg/view"
+	security "github.com/aquasecurity/k8s-security-crds/pkg/apis/security/v1alpha1"
+	"github.com/aquasecurity/octant-risky-plugin/pkg/data"
+	"github.com/aquasecurity/octant-risky-plugin/pkg/view"
 	"github.com/pkg/errors"
 	"github.com/vmware-tanzu/octant/pkg/plugin"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
@@ -101,21 +102,9 @@ func handlePrint(request *service.PrintRequest) (plugin.PrintResponse, error) {
 	}
 
 	repository := data.NewRepository(request.DashboardClient)
-	report, err := repository.GetDescriptorScanReportFor(request.Context(), data.Workload{
-		Kind: "Pod",
-		Name: unstructuredPod.GetName(),
-	})
-	if err != nil {
-		return plugin.PrintResponse{}, err
-	}
 
 	var printItems []component.FlexLayoutItem
-	if report != nil {
-		printItems = append(printItems, component.FlexLayoutItem{
-			Width: component.WidthFull,
-			View:  view.NewDescriptorScanReport(report),
-		})
-	}
+
 	printItems = append(printItems, component.FlexLayoutItem{
 		Width: component.WidthHalf,
 		View:  view.NewDebug("THIS IS A TEST"),
@@ -154,7 +143,7 @@ func handlePrint(request *service.PrintRequest) (plugin.PrintResponse, error) {
 	}, nil
 }
 
-func summarySectionsFor(summary data.VulnerabilitiesSummary) []component.SummarySection {
+func summarySectionsFor(summary security.VulnerabilitiesSummary) []component.SummarySection {
 	return []component.SummarySection{
 		{Header: "Critical Vulnerabilities", Content: component.NewText(strconv.Itoa(summary.CriticalCount))},
 		{Header: "High Vulnerabilities", Content: component.NewText(strconv.Itoa(summary.HighCount))},
