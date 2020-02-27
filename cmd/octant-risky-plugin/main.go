@@ -8,9 +8,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/vmware-tanzu/octant/pkg/plugin"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
-	"github.com/vmware-tanzu/octant/pkg/store"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"log"
 	"strconv"
@@ -21,15 +20,16 @@ func main() {
 	log.SetPrefix("")
 
 	podGVK := schema.GroupVersionKind{Version: "v1", Kind: "Pod"}
+	deploymentGVK := schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"}
 
 	capabilities := &plugin.Capabilities{
-		SupportsTab:           []schema.GroupVersionKind{podGVK},
-		SupportsPrinterConfig: []schema.GroupVersionKind{podGVK},
+		SupportsTab:           []schema.GroupVersionKind{podGVK, deploymentGVK},
+		SupportsPrinterConfig: []schema.GroupVersionKind{podGVK, deploymentGVK},
 		IsModule:              false,
 	}
 	options := []service.PluginOption{
 		service.WithTabPrinter(handleTab),
-		service.WithPrinter(handlePrint),
+		service.WithPrinter(handlePrinterConfig),
 	}
 	p, err := service.Register("risky", "Kubernetes-native risk explorer plugin", capabilities, options...)
 	if err != nil {
@@ -38,28 +38,34 @@ func main() {
 	p.Serve()
 }
 
-func handleTab(request *service.PrintRequest) (plugin.TabResponse, error) {
+func handleTab(request *service.PrintRequest) (tab plugin.TabResponse, err error) {
 	if request.Object == nil {
-		return plugin.TabResponse{}, errors.New("object is nil")
+		err = errors.New("object is nil")
+		return
 	}
 
-	pod, err := data.UnstructuredToPod(request.Object.(*unstructured.Unstructured))
+	accessor := meta.NewAccessor()
+	name, err := accessor.Name(request.Object)
 	if err != nil {
-		return plugin.TabResponse{}, err
+		return
+	}
+	kind, err := accessor.Kind(request.Object)
+	if err != nil {
+		return
 	}
 
 	repository := data.NewRepository(request.DashboardClient)
 	reports, err := repository.GetImageScanReports(request.Context(), data.Workload{
-		Kind: "Pod",
-		Name: pod.Name,
+		Kind: kind,
+		Name: name,
 	})
 	if err != nil {
 		return plugin.TabResponse{}, err
 	}
 
-	tab := createVulnerabilitiesTab(reports)
+	tab = plugin.TabResponse{Tab: createVulnerabilitiesTab(reports)}
 
-	return plugin.TabResponse{Tab: tab}, nil
+	return
 }
 
 func createVulnerabilitiesTab(reports []data.ContainerImageScanReport) *component.Tab {
@@ -77,28 +83,10 @@ func createVulnerabilitiesTab(reports []data.ContainerImageScanReport) *componen
 	return component.NewTabWithContents(*flexLayout)
 }
 
-// handlePrint is called when Octant wants to print an object.
-func handlePrint(request *service.PrintRequest) (plugin.PrintResponse, error) {
+// handlePrinterConfig is called when Octant wants to print an object.
+func handlePrinterConfig(request *service.PrintRequest) (plugin.PrintResponse, error) {
 	if request.Object == nil {
 		return plugin.PrintResponse{}, errors.Errorf("object is nil")
-	}
-
-	// load an object from the cluster and use that object to create a response.
-
-	// Octant has a helper function to generate a key from an object. The key
-	// is used to find the object in the cluster.
-	key, err := store.KeyFromObject(request.Object)
-	if err != nil {
-		return plugin.PrintResponse{}, err
-	}
-	unstructuredPod, found, err := request.DashboardClient.Get(request.Context(), key)
-	if err != nil {
-		return plugin.PrintResponse{}, err
-	}
-
-	// The plugin can check if the object it requested exists.
-	if !found {
-		return plugin.PrintResponse{}, errors.New("object doesn't exist")
 	}
 
 	repository := data.NewRepository(request.DashboardClient)
@@ -107,12 +95,22 @@ func handlePrint(request *service.PrintRequest) (plugin.PrintResponse, error) {
 
 	printItems = append(printItems, component.FlexLayoutItem{
 		Width: component.WidthHalf,
-		View:  view.NewDebug("THIS IS A TEST"),
+		View:  view.NewDebug(fmt.Sprintf("%v", request.Object)),
 	})
 
+	accessor := meta.NewAccessor()
+	kind, err := accessor.Kind(request.Object)
+	if err != nil {
+		return plugin.PrintResponse{}, err
+	}
+	name, err := accessor.Name(request.Object)
+	if err != nil {
+		return plugin.PrintResponse{}, err
+	}
+
 	summary, err := repository.GetVulnerabilitiesSummary(request.Context(), data.Workload{
-		Kind: "Pod",
-		Name: unstructuredPod.GetName(),
+		Kind: kind,
+		Name: name,
 	})
 	if err != nil {
 		return plugin.PrintResponse{}, err
