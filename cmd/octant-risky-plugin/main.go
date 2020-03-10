@@ -12,35 +12,53 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"log"
+	"os"
 	"strconv"
 	"time"
 )
 
+const (
+	pluginName        = "risky"
+	pluginDescription = "Kubernetes-native risk explorer plugin"
+)
+
+var (
+	podGVK        = schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Pod"}
+	deploymentGVK = schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"}
+	daemonSetGVK  = schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "DaemonSet"}
+	namespaceGVK  = schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Namespace"}
+)
+
 func main() {
+	if err := run(os.Args); err != nil {
+		log.Fatalf("error: %v", err)
+	}
+}
+
+func run(_ []string) (err error) {
 	log.SetPrefix("")
 
-	podGVK := schema.GroupVersionKind{Version: "v1", Kind: "Pod"}
-	deploymentGVK := schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"}
-
 	capabilities := &plugin.Capabilities{
-		SupportsTab:           []schema.GroupVersionKind{podGVK, deploymentGVK},
-		SupportsPrinterConfig: []schema.GroupVersionKind{podGVK, deploymentGVK},
+		SupportsTab:           []schema.GroupVersionKind{podGVK, deploymentGVK, daemonSetGVK, namespaceGVK},
+		SupportsPrinterConfig: []schema.GroupVersionKind{podGVK, deploymentGVK, daemonSetGVK},
 		IsModule:              false,
 	}
 	options := []service.PluginOption{
-		service.WithTabPrinter(handleTab),
+		service.WithTabPrinter(handleVulnerabilitiesTab),
 		service.WithPrinter(handlePrinterConfig),
 	}
-	p, err := service.Register("risky", "Kubernetes-native risk explorer plugin", capabilities, options...)
+	p, err := service.Register(pluginName, pluginDescription, capabilities, options...)
 	if err != nil {
-		log.Fatal(err)
+		return
 	}
 	p.Serve()
+	return
 }
 
-func handleTab(request *service.PrintRequest) (tab plugin.TabResponse, err error) {
+// handleVulnerabilitiesTab is called when Octant want to print the Vulnerabilities tab.
+func handleVulnerabilitiesTab(request *service.PrintRequest) (tag plugin.TabResponse, err error) {
 	if request.Object == nil {
-		err = errors.New("object is nil")
+		err = errors.New("request object is nil")
 		return
 	}
 
@@ -54,17 +72,35 @@ func handleTab(request *service.PrintRequest) (tab plugin.TabResponse, err error
 		return
 	}
 
+	switch kind {
+	case data.WorkloadKindPod, data.WorkloadKindDeployment, data.WorkloadKindDaemonSet:
+		return handleVulnerabilitiesTabForWorkload(request, data.Workload{Kind: kind, Name: name})
+	case data.KindNamespace:
+		return handleVulnerabilitiesTabForNamespace(request, name)
+	}
+
+	return
+}
+
+func handleVulnerabilitiesTabForWorkload(request *service.PrintRequest, workload data.Workload) (tab plugin.TabResponse, err error) {
 	repository := data.NewRepository(request.DashboardClient)
-	reports, err := repository.GetImageScanReports(request.Context(), data.Workload{
-		Kind: kind,
-		Name: name,
-	})
+	reports, err := repository.GetVulnerabilitiesForWorkload(request.Context(), workload)
 	if err != nil {
-		return plugin.TabResponse{}, err
+		return
 	}
 
 	tab = plugin.TabResponse{Tab: createVulnerabilitiesTab(reports)}
 
+	return
+}
+
+func handleVulnerabilitiesTabForNamespace(request *service.PrintRequest, namespace string) (tab plugin.TabResponse, err error) {
+	repository := data.NewRepository(request.DashboardClient)
+	reports, err := repository.GetVulnerabilitiesForNamespace(request.Context(), namespace)
+	if err != nil {
+		return
+	}
+	tab = plugin.TabResponse{Tab: createVulnerabilitiesTab([]data.ContainerImageScanReport{reports})}
 	return
 }
 

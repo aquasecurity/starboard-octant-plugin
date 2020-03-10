@@ -3,13 +3,31 @@ package data
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	security "github.com/aquasecurity/k8s-security-crds/pkg/apis/security/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 	"github.com/vmware-tanzu/octant/pkg/store"
-	core "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"golang.org/x/xerrors"
 	"sort"
 	"strings"
+)
+
+const (
+	WorkloadKindPod        = "Pod"
+	WorkloadKindDeployment = "Deployment"
+	WorkloadKindDaemonSet  = "DaemonSet"
+	KindNamespace          = "Namespace"
+)
+
+const (
+	labelWorkloadKind  = "risky.workload.kind"
+	labelWorkloadName  = "risky.workload.name"
+	labelContainerName = "risky.container.name"
+)
+
+const (
+	vulnerabilitiesAPIVersion = "security.aquasecurity.github.com/v1alpha1"
+	vulnerabilitiesKind       = "ImageScanReport"
 )
 
 type Workload struct {
@@ -33,7 +51,7 @@ type ContainerImageScanReport struct {
 }
 
 func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options Workload) (vs security.VulnerabilitiesSummary, err error) {
-	containerReports, err := r.GetImageScanReports(ctx, options)
+	containerReports, err := r.GetVulnerabilitiesForWorkload(ctx, options)
 	if err != nil {
 		return vs, err
 	}
@@ -56,57 +74,86 @@ func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options Work
 	return
 }
 
-func (r *Repository) GetImageScanReports(ctx context.Context, options Workload) ([]ContainerImageScanReport, error) {
+func (r *Repository) GetVulnerabilitiesForNamespace(ctx context.Context, namespace string) (report ContainerImageScanReport, err error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
-		APIVersion: "security.aquasecurity.github.com/v1",
-		Kind:       "ImageScanReport",
-		//Selector: &labels.Set{
-		//	"risky.workload.kind":  options.Kind,
-		//	"risky.workload.name":  options.Name,
-		//	"risky.container.name": options.Container,
-		//},
+		APIVersion: vulnerabilitiesAPIVersion,
+		Kind:       vulnerabilitiesKind,
+		Namespace:  namespace,
 	})
 	if err != nil {
-		return nil, err
+		return
 	}
 	b, err := unstructuredList.MarshalJSON()
 	if err != nil {
-		return nil, err
+		return
 	}
 	var reportList security.ImageScanReportList
 	err = json.Unmarshal(b, &reportList)
 	if err != nil {
-		return nil, err
+		return
 	}
-	var reports []ContainerImageScanReport
+
+	var vulnerabilities []security.Vulnerability
+
 	for _, i := range reportList.Items {
-		containerName, containerNameSpecified := i.Labels["risky.container.name"]
-		if i.Labels["risky.workload.kind"] == options.Kind &&
-			i.Labels["risky.workload.name"] == options.Name &&
+		if _, containerNameSpecified := i.Labels[labelContainerName]; !containerNameSpecified {
+			continue
+		}
+		vulnerabilities = append(vulnerabilities, i.Spec.Vulnerabilities...)
+	}
+
+	sort.SliceStable(vulnerabilities, func(i, j int) bool {
+		return strings.Compare(vulnerabilities[i].VulnerabilityID, vulnerabilities[j].VulnerabilityID) < 0
+	})
+
+	report = ContainerImageScanReport{
+		Name: fmt.Sprintf("Namespace %s", namespace),
+		Report: security.ImageScanReport{
+			Spec: security.ImageScanReportSpec{
+				Vulnerabilities: vulnerabilities,
+			},
+		},
+	}
+
+	return
+}
+
+func (r *Repository) GetVulnerabilitiesForWorkload(ctx context.Context, options Workload) (reports []ContainerImageScanReport, err error) {
+	unstructuredList, err := r.client.List(ctx, store.Key{
+		APIVersion: vulnerabilitiesAPIVersion,
+		Kind:       vulnerabilitiesKind,
+		// TODO Report bug to Octant? Apparently the label selector doesn't work and I have to do filtering manually :(
+		//Selector: &labels.Set{
+		//	labelWorkloadKind: options.Kind,
+		//	labelWorkloadName: options.Name,
+		//},
+	})
+	if err != nil {
+		err = xerrors.Errorf("listing vulnerabilities: %w", err)
+		return
+	}
+	b, err := unstructuredList.MarshalJSON()
+	if err != nil {
+		err = xerrors.Errorf("marshalling unstructured list to JSON: %w", err)
+		return
+	}
+	var reportList security.ImageScanReportList
+	err = json.Unmarshal(b, &reportList)
+	if err != nil {
+		err = xerrors.Errorf("unmarshalling JSON to ImageScanReport: %w", err)
+		return
+	}
+	for _, item := range reportList.Items {
+		containerName, containerNameSpecified := item.Labels[labelContainerName]
+		if item.Labels[labelWorkloadKind] == options.Kind &&
+			item.Labels[labelWorkloadName] == options.Name &&
 			containerNameSpecified {
 			reports = append(reports, ContainerImageScanReport{
-				Name:   containerName,
-				Report: i,
+				Name:   fmt.Sprintf("Container %s", containerName),
+				Report: item,
 			})
 		}
 	}
 
-	sort.SliceStable(reports, func(i, j int) bool {
-		return strings.Compare(reports[i].Name, reports[j].Name) < 0
-	})
-
-	return reports, nil
-}
-
-func UnstructuredToPod(u *unstructured.Unstructured) (core.Pod, error) {
-	b, err := u.MarshalJSON()
-	if err != nil {
-		return core.Pod{}, err
-	}
-	var pod core.Pod
-	err = json.Unmarshal(b, &pod)
-	if err != nil {
-		return core.Pod{}, err
-	}
-	return pod, nil
+	return
 }

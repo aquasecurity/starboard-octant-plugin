@@ -6,9 +6,9 @@ import (
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 )
 
-func NewImageScanReport(containerName string, report security.ImageScanReport) component.Component {
+func NewImageScanReport(reportName string, report security.ImageScanReport) component.Component {
 	table := component.NewTableWithRows(
-		fmt.Sprintf("Image Scan Report %s", containerName), "There are no vulnerabilities!",
+		fmt.Sprintf(reportName), "There are no vulnerabilities!",
 		component.NewTableCols("ID", "Severity", "Title", "Resource", "Installed Version", "Fixed Version"),
 		[]component.TableRow{})
 
