@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	security "github.com/aquasecurity/k8s-security-crds/pkg/apis/security/v1alpha1"
+	security "github.com/aquasecurity/k8s-security-crds/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 	"github.com/vmware-tanzu/octant/pkg/store"
 	"golang.org/x/xerrors"
@@ -26,8 +26,8 @@ const (
 )
 
 const (
-	vulnerabilitiesAPIVersion = "security.aquasecurity.github.com/v1alpha1"
-	vulnerabilitiesKind       = "ImageScanReport"
+	vulnerabilitiesAPIVersion = "aquasecurity.github.com/v1alpha1"
+	vulnerabilitiesKind       = "Vulnerability"
 )
 
 type Workload struct {
@@ -47,10 +47,10 @@ func NewRepository(client service.Dashboard) *Repository {
 
 type ContainerImageScanReport struct {
 	Name   string
-	Report security.ImageScanReport
+	Report security.Vulnerability
 }
 
-func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options Workload) (vs security.VulnerabilitiesSummary, err error) {
+func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options Workload) (vs security.VulnerabilitySummary, err error) {
 	containerReports, err := r.GetVulnerabilitiesForWorkload(ctx, options)
 	if err != nil {
 		return vs, err
@@ -87,13 +87,13 @@ func (r *Repository) GetVulnerabilitiesForNamespace(ctx context.Context, namespa
 	if err != nil {
 		return
 	}
-	var reportList security.ImageScanReportList
+	var reportList security.VulnerabilityList
 	err = json.Unmarshal(b, &reportList)
 	if err != nil {
 		return
 	}
 
-	var vulnerabilities []security.Vulnerability
+	var vulnerabilities []security.VulnerabilityItem
 
 	for _, i := range reportList.Items {
 		if _, containerNameSpecified := i.Labels[labelContainerName]; !containerNameSpecified {
@@ -108,8 +108,8 @@ func (r *Repository) GetVulnerabilitiesForNamespace(ctx context.Context, namespa
 
 	report = ContainerImageScanReport{
 		Name: fmt.Sprintf("Namespace %s", namespace),
-		Report: security.ImageScanReport{
-			Spec: security.ImageScanReportSpec{
+		Report: security.Vulnerability{
+			Spec: security.VulnerabilityReport{
 				Vulnerabilities: vulnerabilities,
 			},
 		},
@@ -137,7 +137,7 @@ func (r *Repository) GetVulnerabilitiesForWorkload(ctx context.Context, options 
 		err = xerrors.Errorf("marshalling unstructured list to JSON: %w", err)
 		return
 	}
-	var reportList security.ImageScanReportList
+	var reportList security.VulnerabilityList
 	err = json.Unmarshal(b, &reportList)
 	if err != nil {
 		err = xerrors.Errorf("unmarshalling JSON to ImageScanReport: %w", err)
@@ -154,6 +154,10 @@ func (r *Repository) GetVulnerabilitiesForWorkload(ctx context.Context, options 
 			})
 		}
 	}
+
+	sort.SliceStable(reports, func(i, j int) bool {
+		return strings.Compare(reports[i].Name, reports[j].Name) < 0
+	})
 
 	return
 }

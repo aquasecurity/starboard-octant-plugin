@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	security "github.com/aquasecurity/k8s-security-crds/pkg/apis/security/v1alpha1"
+	security "github.com/aquasecurity/k8s-security-crds/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/octant-risky-plugin/pkg/data"
 	"github.com/aquasecurity/octant-risky-plugin/pkg/view"
 	"github.com/pkg/errors"
@@ -116,6 +116,7 @@ func createVulnerabilitiesTab(reports []data.ContainerImageScanReport) *componen
 
 	flexLayout.AddSections(items)
 
+
 	return component.NewTabWithContents(*flexLayout)
 }
 
@@ -177,7 +178,7 @@ func handlePrinterConfig(request *service.PrintRequest) (plugin.PrintResponse, e
 	}, nil
 }
 
-func summarySectionsFor(summary security.VulnerabilitiesSummary) []component.SummarySection {
+func summarySectionsFor(summary security.VulnerabilitySummary) []component.SummarySection {
 	return []component.SummarySection{
 		{Header: "Critical Vulnerabilities", Content: component.NewText(strconv.Itoa(summary.CriticalCount))},
 		{Header: "High Vulnerabilities", Content: component.NewText(strconv.Itoa(summary.HighCount))},

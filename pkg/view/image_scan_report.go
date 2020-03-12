@@ -2,14 +2,14 @@ package view
 
 import (
 	"fmt"
-	security "github.com/aquasecurity/k8s-security-crds/pkg/apis/security/v1alpha1"
+	sec "github.com/aquasecurity/k8s-security-crds/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 )
 
-func NewImageScanReport(reportName string, report security.ImageScanReport) component.Component {
+func NewImageScanReport(reportName string, report sec.Vulnerability) component.Component {
 	table := component.NewTableWithRows(
 		fmt.Sprintf(reportName), "There are no vulnerabilities!",
-		component.NewTableCols("ID", "Severity", "Title", "Resource", "Installed Version", "Fixed Version"),
+		component.NewTableCols("ID", "Severity", "Title", "Resource", "Installed Version", "Fixed Version", "Layer ID"),
 		[]component.TableRow{})
 
 	for _, vi := range report.Spec.Vulnerabilities {
@@ -20,6 +20,7 @@ func NewImageScanReport(reportName string, report security.ImageScanReport) comp
 			"Resource":          component.NewText(vi.Resource),
 			"Installed Version": component.NewText(vi.InstalledVersion),
 			"Fixed Version":     component.NewText(vi.FixedVersion),
+			"Layer ID":          component.NewText(vi.LayerID),
 		}
 		table.Add(tr)
 	}
@@ -27,7 +28,7 @@ func NewImageScanReport(reportName string, report security.ImageScanReport) comp
 	return table
 }
 
-func getLinkComponent(v security.Vulnerability) component.Component {
+func getLinkComponent(v sec.VulnerabilityItem) component.Component {
 	if len(v.Links) > 0 {
 		return component.NewLink(v.VulnerabilityID, v.VulnerabilityID, v.Links[0])
 	}
