@@ -1,0 +1,101 @@
+syntax = "proto3";
+package dashboard;
+
+message Empty {}
+
+message ContentRequest {
+    string path = 1;
+}
+
+message ContentResponse {
+    bytes content_response = 1;
+}
+
+message HandleActionRequest {
+    bytes payload = 1;
+}
+
+message HandleActionResponse {
+
+}
+
+message NavigationRequest {}
+
+message NavigationResponse {
+    message Navigation {
+        string title = 1;
+        string path = 2;
+        repeated Navigation children = 3;
+        string icon_name = 4;
+        string icon_source = 5;
+    }
+
+    Navigation navigation = 1;
+}
+
+message RegisterRequest {
+    string dashboardAPIAddress = 1;
+}
+
+message RegisterResponse {
+    message GroupVersionKind {
+        string group = 1;
+        string version = 2;
+        string kind = 3;
+    }
+    message Capabilities {
+        repeated GroupVersionKind supportsPrinterConfig = 1;
+        repeated GroupVersionKind supportsPrinterStatus = 2;
+        repeated GroupVersionKind supportsPrinterItems = 3;
+        repeated GroupVersionKind supportsObjectStatus = 4;
+        repeated GroupVersionKind supportsTab = 5;
+        bool isModule = 6;
+        repeated string action_names = 7;
+    }
+
+    string pluginName = 1;
+    string description = 2;
+    Capabilities capabilities = 3;
+}
+
+message ObjectRequest {
+    bytes object = 1;
+}
+
+message PrintResponse {
+    message SummaryItem {
+        string header = 1;
+        bytes component = 2;
+    }
+
+    repeated SummaryItem config = 1;
+    repeated SummaryItem status = 2;
+    bytes items = 3;
+}
+
+message PrintTabResponse {
+    string name = 1;
+    bytes layout = 2;
+}
+
+message ObjectStatusResponse {
+    bytes objectStatus = 1;
+}
+
+message WatchRequest {
+    string watchID = 1;
+    bytes object = 2;
+}
+
+service Plugin {
+    rpc Content(ContentRequest) returns (ContentResponse);
+    rpc HandleAction(HandleActionRequest) returns (HandleActionResponse);
+    rpc Navigation(NavigationRequest) returns (NavigationResponse);
+    rpc Register(RegisterRequest) returns (RegisterResponse);
+    rpc Print(ObjectRequest) returns (PrintResponse);
+    rpc ObjectStatus(ObjectRequest) returns (ObjectStatusResponse);
+    rpc PrintTab(ObjectRequest) returns (PrintTabResponse);
+    rpc WatchAdd(WatchRequest) returns (Empty);
+    rpc WatchUpdate(WatchRequest) returns (Empty);
+    rpc WatchDelete(WatchRequest) returns (Empty);
+}
