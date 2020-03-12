@@ -21,9 +21,9 @@ Then, in an environment authenticated against your Kubernetes cluster, run `octa
 
 ### List vulnerabilities of unmanaged [Pod][k8s-pod]
 
-This is equivalent of `kubectl get imagescanreports -l risky.workload.kind=Pod -l risky.workload.name=nginx -o yaml`,
+This is equivalent of `kubectl get vulnerabilities -l risky.workload.kind=Pod -l risky.workload.name=nginx -o yaml`,
 assuming that `kubectl risky scan pod/nginx` was run and saved a scan report as an instance of
-the `imagescanreports.security.aquasecurity.github.com` [custom resource][k8s-custom-resources].
+the `vulnerabilities.aquasecurity.github.com` [custom resource][k8s-custom-resources].
 
 ![](./docs/images/pod_vulnerabilities.png)
 
@@ -35,9 +35,9 @@ Shows the summary of vulnerabilities found in the Pod within the **Status** card
 
 ### List vulnerabilities of [Deployment][k8s-deployment]
 
-This is equivalent of `kubectl get imagescanreports -l risky.workload.kind=Deployment -l risky.workload.name=nginx -o yaml`,
+This is equivalent of `kubectl get vulnerabilities -l risky.workload.kind=Deployment -l risky.workload.name=nginx -o yaml`,
 assuming that `kubectl risky scan deployments/nginx` was run and saved a scan report as an instance of
-the `imagescanreports.security.aquasecurity.github.com` [custom resource][k8s-custom-resources].
+the `vulnerabilities.aquasecurity.github.com` [custom resource][k8s-custom-resources].
 
 ![](./docs/images/deployment_vulnerabilities.png)
 
