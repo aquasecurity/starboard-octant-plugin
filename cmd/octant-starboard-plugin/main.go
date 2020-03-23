@@ -2,24 +2,25 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
+	"strconv"
+	"time"
+
 	security "github.com/aquasecurity/k8s-security-crds/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/octant-risky-plugin/pkg/data"
-	"github.com/aquasecurity/octant-risky-plugin/pkg/view"
+	"github.com/aquasecurity/octant-starboard-plugin/pkg/data"
+	"github.com/aquasecurity/octant-starboard-plugin/pkg/view"
 	"github.com/pkg/errors"
 	"github.com/vmware-tanzu/octant/pkg/plugin"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"log"
-	"os"
-	"strconv"
-	"time"
 )
 
 const (
-	pluginName        = "risky"
-	pluginDescription = "Kubernetes-native risk explorer plugin"
+	pluginName        = "starboard"
+	pluginDescription = "Kubernetes-native security"
 )
 
 var (
@@ -115,7 +116,6 @@ func createVulnerabilitiesTab(reports []data.ContainerImageScanReport) *componen
 	}
 
 	flexLayout.AddSections(items)
-
 
 	return component.NewTabWithContents(*flexLayout)
 }

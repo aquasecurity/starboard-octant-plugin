@@ -1,4 +1,4 @@
-module github.com/aquasecurity/octant-risky-plugin
+module github.com/aquasecurity/octant-starboard-plugin
 
 go 1.13
 

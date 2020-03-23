@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
+	"strings"
+
 	security "github.com/aquasecurity/k8s-security-crds/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 	"github.com/vmware-tanzu/octant/pkg/store"
 	"golang.org/x/xerrors"
-	"sort"
-	"strings"
 )
 
 const (
@@ -20,9 +21,9 @@ const (
 )
 
 const (
-	labelWorkloadKind  = "risky.workload.kind"
-	labelWorkloadName  = "risky.workload.name"
-	labelContainerName = "risky.container.name"
+	labelWorkloadKind  = "starboard.workload.kind"
+	labelWorkloadName  = "starboard.workload.name"
+	labelContainerName = "starboard.container.name"
 )
 
 const (

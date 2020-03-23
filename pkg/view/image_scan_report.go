@@ -2,6 +2,7 @@ package view
 
 import (
 	"fmt"
+
 	sec "github.com/aquasecurity/k8s-security-crds/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 )
