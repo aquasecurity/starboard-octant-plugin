@@ -3,7 +3,7 @@ OCTANT_PLUGINS_DIR = ~/.config/octant/plugins
 
 .PHONY: build
 build:
-	go build -o bin/octant-starboard-plugin cmd/octant-starboard-plugin/main.go
+	go build -mod=vendor -o bin/octant-starboard-plugin cmd/octant-starboard-plugin/main.go
 
 deploy: build
 	mkdir -p $(OCTANT_PLUGINS_DIR)
