@@ -10,7 +10,6 @@ import (
 	security "github.com/aquasecurity/k8s-security-crds/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 	"github.com/vmware-tanzu/octant/pkg/store"
-	"golang.org/x/xerrors"
 )
 
 const (
@@ -57,7 +56,7 @@ func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options Work
 		return vs, err
 	}
 	for _, cr := range containerReports {
-		for _, v := range cr.Report.Spec.Vulnerabilities {
+		for _, v := range cr.Report.Report.Vulnerabilities {
 			switch v.Severity {
 			case security.SeverityCritical:
 				vs.CriticalCount++
@@ -100,7 +99,7 @@ func (r *Repository) GetVulnerabilitiesForNamespace(ctx context.Context, namespa
 		if _, containerNameSpecified := i.Labels[labelContainerName]; !containerNameSpecified {
 			continue
 		}
-		vulnerabilities = append(vulnerabilities, i.Spec.Vulnerabilities...)
+		vulnerabilities = append(vulnerabilities, i.Report.Vulnerabilities...)
 	}
 
 	sort.SliceStable(vulnerabilities, func(i, j int) bool {
@@ -110,7 +109,7 @@ func (r *Repository) GetVulnerabilitiesForNamespace(ctx context.Context, namespa
 	report = ContainerImageScanReport{
 		Name: fmt.Sprintf("Namespace %s", namespace),
 		Report: security.Vulnerability{
-			Spec: security.VulnerabilityReport{
+			Report: security.VulnerabilityReport{
 				Vulnerabilities: vulnerabilities,
 			},
 		},
@@ -130,18 +129,18 @@ func (r *Repository) GetVulnerabilitiesForWorkload(ctx context.Context, options 
 		//},
 	})
 	if err != nil {
-		err = xerrors.Errorf("listing vulnerabilities: %w", err)
+		err = fmt.Errorf("listing vulnerabilities: %w", err)
 		return
 	}
 	b, err := unstructuredList.MarshalJSON()
 	if err != nil {
-		err = xerrors.Errorf("marshalling unstructured list to JSON: %w", err)
+		err = fmt.Errorf("marshalling unstructured list to JSON: %w", err)
 		return
 	}
 	var reportList security.VulnerabilityList
 	err = json.Unmarshal(b, &reportList)
 	if err != nil {
-		err = xerrors.Errorf("unmarshalling JSON to ImageScanReport: %w", err)
+		err = fmt.Errorf("unmarshalling JSON to ImageScanReport: %w", err)
 		return
 	}
 	for _, item := range reportList.Items {

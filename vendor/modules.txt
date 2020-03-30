@@ -14,7 +14,7 @@ github.com/Azure/go-autorest/tracing
 # github.com/GeertJohan/go.rice v1.0.0
 github.com/GeertJohan/go.rice
 github.com/GeertJohan/go.rice/embedded
-# github.com/aquasecurity/k8s-security-crds v0.0.9
+# github.com/aquasecurity/k8s-security-crds v0.0.12
 github.com/aquasecurity/k8s-security-crds/pkg/apis/aquasecurity
 github.com/aquasecurity/k8s-security-crds/pkg/apis/aquasecurity/v1alpha1
 # github.com/daaku/go.zipexe v1.0.0
@@ -129,7 +129,7 @@ github.com/spf13/viper
 # github.com/stretchr/testify v1.4.0
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
-# github.com/vmware-tanzu/octant v0.10.2
+# github.com/vmware-tanzu/octant v0.11.0
 github.com/vmware-tanzu/octant/internal/cluster
 github.com/vmware-tanzu/octant/internal/gvk
 github.com/vmware-tanzu/octant/internal/log
@@ -142,6 +142,7 @@ github.com/vmware-tanzu/octant/internal/util/kubernetes
 github.com/vmware-tanzu/octant/internal/util/strings
 github.com/vmware-tanzu/octant/pkg/action
 github.com/vmware-tanzu/octant/pkg/icon
+github.com/vmware-tanzu/octant/pkg/log
 github.com/vmware-tanzu/octant/pkg/navigation
 github.com/vmware-tanzu/octant/pkg/plugin
 github.com/vmware-tanzu/octant/pkg/plugin/api
@@ -150,7 +151,6 @@ github.com/vmware-tanzu/octant/pkg/plugin/dashboard
 github.com/vmware-tanzu/octant/pkg/plugin/service
 github.com/vmware-tanzu/octant/pkg/store
 github.com/vmware-tanzu/octant/pkg/view/component
-github.com/vmware-tanzu/octant/thirdparty/unstructured
 # go.uber.org/atomic v1.4.0
 go.uber.org/atomic
 # go.uber.org/multierr v1.1.0
@@ -191,9 +191,6 @@ golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 # golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 golang.org/x/time/rate
-# golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7
-golang.org/x/xerrors
-golang.org/x/xerrors/internal
 # google.golang.org/appengine v1.5.0
 google.golang.org/appengine
 google.golang.org/appengine/internal
@@ -245,9 +242,9 @@ google.golang.org/grpc/status
 google.golang.org/grpc/tap
 # gopkg.in/inf.v0 v0.9.1
 gopkg.in/inf.v0
-# gopkg.in/yaml.v2 v2.2.8
+# gopkg.in/yaml.v2 v2.2.4
 gopkg.in/yaml.v2
-# k8s.io/api v0.17.3
+# k8s.io/api v0.17.0
 k8s.io/api/admissionregistration/v1
 k8s.io/api/admissionregistration/v1beta1
 k8s.io/api/apps/v1
@@ -291,7 +288,7 @@ k8s.io/api/storage/v1beta1
 # k8s.io/apiextensions-apiserver v0.17.0
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions
 k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1
-# k8s.io/apimachinery v0.17.3
+# k8s.io/apimachinery v0.17.0
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/api/meta
 k8s.io/apimachinery/pkg/api/resource
@@ -322,17 +319,21 @@ k8s.io/apimachinery/pkg/util/httpstream
 k8s.io/apimachinery/pkg/util/httpstream/spdy
 k8s.io/apimachinery/pkg/util/intstr
 k8s.io/apimachinery/pkg/util/json
+k8s.io/apimachinery/pkg/util/mergepatch
 k8s.io/apimachinery/pkg/util/naming
 k8s.io/apimachinery/pkg/util/net
+k8s.io/apimachinery/pkg/util/rand
 k8s.io/apimachinery/pkg/util/remotecommand
 k8s.io/apimachinery/pkg/util/runtime
 k8s.io/apimachinery/pkg/util/sets
+k8s.io/apimachinery/pkg/util/strategicpatch
 k8s.io/apimachinery/pkg/util/validation
 k8s.io/apimachinery/pkg/util/validation/field
 k8s.io/apimachinery/pkg/util/wait
 k8s.io/apimachinery/pkg/util/yaml
 k8s.io/apimachinery/pkg/version
 k8s.io/apimachinery/pkg/watch
+k8s.io/apimachinery/third_party/forked/golang/json
 k8s.io/apimachinery/third_party/forked/golang/netutil
 k8s.io/apimachinery/third_party/forked/golang/reflect
 # k8s.io/client-go v0.17.0
@@ -416,6 +417,8 @@ k8s.io/client-go/util/keyutil
 k8s.io/client-go/util/retry
 # k8s.io/klog v1.0.0
 k8s.io/klog
+# k8s.io/kube-openapi v0.0.0-20191107075043-30be4d16710a
+k8s.io/kube-openapi/pkg/util/proto
 # k8s.io/utils v0.0.0-20191114184206-e782cd3c129f
 k8s.io/utils/buffer
 k8s.io/utils/integer

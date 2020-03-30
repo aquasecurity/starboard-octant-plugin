@@ -11,6 +11,7 @@ package plugin
 
 import (
 	"context"
+	"fmt"
 	"os/exec"
 	"path/filepath"
 	"sort"
@@ -453,11 +454,24 @@ func (m *Manager) Print(ctx context.Context, object runtime.Object) (*PrintRespo
 	}()
 
 	if err := runner.Run(ctx, object, m.store.ClientNames()); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("print runner failed: %w", err)
 	}
 	close(ch)
 
 	<-done
+
+	// Attempt to eliminate whitespace before fallback
+	sort.Slice(pr.Items, func(i, j int) bool {
+		if a, b := pr.Items[i].Width, pr.Items[j].Width; a != b {
+			return a < b
+		}
+
+		a, _ := component.TitleFromTitleComponent(pr.Items[i].View.GetMetadata().Title)
+		b, _ := component.TitleFromTitleComponent(pr.Items[j].View.GetMetadata().Title)
+
+		return a < b
+	})
+
 	return &pr, nil
 }
 

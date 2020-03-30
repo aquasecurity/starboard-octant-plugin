@@ -13,7 +13,7 @@ func NewImageScanReport(reportName string, report sec.Vulnerability) component.C
 		component.NewTableCols("ID", "Severity", "Title", "Resource", "Installed Version", "Fixed Version", "Layer ID"),
 		[]component.TableRow{})
 
-	for _, vi := range report.Spec.Vulnerabilities {
+	for _, vi := range report.Report.Vulnerabilities {
 		tr := component.TableRow{
 			"ID":                getLinkComponent(vi),
 			"Severity":          component.NewText(fmt.Sprintf("%s", vi.Severity)),

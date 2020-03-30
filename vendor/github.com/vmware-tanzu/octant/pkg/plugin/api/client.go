@@ -43,7 +43,6 @@ type ClientOption func(c *Client)
 // Client is a dashboard service API client.
 type Client struct {
 	DashboardConnection DashboardConnection
-	// dashboardClientFactory DashboardClientFactory
 }
 
 var _ Service = (*Client)(nil)
@@ -100,25 +99,25 @@ func (c *Client) List(ctx context.Context, key store.Key) (*unstructured.Unstruc
 }
 
 // Get retrieves an object from the dashboard's objectStore.
-func (c *Client) Get(ctx context.Context, key store.Key) (*unstructured.Unstructured, bool, error) {
+func (c *Client) Get(ctx context.Context, key store.Key) (*unstructured.Unstructured, error) {
 	client := c.DashboardConnection.Client()
 
 	keyRequest, err := convertFromKey(key)
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
 	resp, err := client.Get(ctx, keyRequest)
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
-	object, found, err := convertToObject(resp.Object)
+	object, err := convertToObject(resp.Object)
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
-	return object, found, nil
+	return object, nil
 }
 
 // Update updates an object in the store.
@@ -173,6 +172,20 @@ func (c *Client) CancelPortForward(ctx context.Context, id string) {
 		logger := log.From(ctx)
 		logger.Errorf("unable to cancel port forward: %v", err)
 	}
+}
+
+// ListNamespaces lists namespaces.
+func (c *Client) ListNamespaces(ctx context.Context) (NamespacesResponse, error) {
+	client := c.DashboardConnection.Client()
+
+	resp, err := client.ListNamespaces(ctx, &proto.Empty{})
+	if err != nil {
+		return NamespacesResponse{}, err
+	}
+
+	return NamespacesResponse{
+		Namespaces: resp.Namespaces,
+	}, nil
 }
 
 // ForceFrontendUpdate forces the frontend to update itself.

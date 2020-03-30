@@ -7,7 +7,6 @@ package component
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 )
 
@@ -23,6 +22,7 @@ type TerminalDetails struct {
 type TerminalConfig struct {
 	Namespace string          `json:"namespace"`
 	Name      string          `json:"name"`
+	PodName   string          `json:"podName"`
 	Details   TerminalDetails `json:"terminal"`
 }
 
@@ -32,12 +32,13 @@ type Terminal struct {
 }
 
 // NewTerminal creates a terminal component.
-func NewTerminal(namespace, name string, details TerminalDetails) *Terminal {
+func NewTerminal(namespace, name string, podName string, details TerminalDetails) *Terminal {
 	return &Terminal{
-		base: newBase(typeTerminal, TitleFromString(fmt.Sprintf("%s / %s", namespace, name))),
+		base: newBase(typeTerminal, TitleFromString(name)),
 		Config: TerminalConfig{
 			Namespace: namespace,
 			Name:      name,
+			PodName:   podName,
 			Details:   details,
 		},
 	}
@@ -48,10 +49,10 @@ func (t *Terminal) GetMetadata() Metadata {
 	return t.Metadata
 }
 
-type terminalMarshall Terminal
+type terminalMarshal Terminal
 
 func (t *Terminal) MarshalJSON() ([]byte, error) {
-	m := terminalMarshall(*t)
+	m := terminalMarshal(*t)
 	m.Metadata.Type = typeTerminal
 
 	return json.Marshal(&m)

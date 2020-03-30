@@ -17,7 +17,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/vmware-tanzu/octant/internal/cluster"
-	"github.com/vmware-tanzu/octant/internal/log"
+	"github.com/vmware-tanzu/octant/pkg/log"
 	"github.com/vmware-tanzu/octant/pkg/store"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -31,7 +31,7 @@ type Manager interface {
 	List(namespace string) []Instance
 	Get(id string) (Instance, bool)
 	Delete(id string)
-	Create(ctx context.Context, logger log.Logger, key store.Key, container string, command string) (Instance, error)
+	Create(ctx context.Context, logger log.Logger, key store.Key, container string, command string, sessionID string) (Instance, error)
 	Select(ctx context.Context) chan Instance
 	ForceUpdate(id string)
 	SendScrollback(id string) bool
@@ -92,17 +92,33 @@ func (tm *manager) Select(ctx context.Context) chan Instance {
 	return tm.chanInstance
 }
 
-func (tm *manager) Create(ctx context.Context, logger log.Logger, key store.Key, container, command string) (Instance, error) {
-	t := NewTerminalInstance(ctx, logger, key, container, command, tm.chanInstance)
-	tm.instances.Store(t.ID(), t)
+func (tm *manager) Create(ctx context.Context, logger log.Logger, key store.Key, container string, command string, sessionID string) (Instance, error) {
+	var t, err = tm.Find(key, sessionID)
 
-	pod, ok, err := tm.objectStore.Get(ctx, key)
+	if t != nil {
+		logger.Debugf("Using cashed terminal", t.ID(), t.Active())
+		if !t.Active() {
+			logger.Debugf("Deleting terminal", t.ID())
+			t.ResetScrollback()
+			tm.SetScrollback(t.ID(), true)
+			tm.ForceUpdate(t.ID())
+			tm.Delete(t.ID())
+		}
+		return t, err
+	}
+
+	ctx = context.WithValue(ctx, "sessionID", sessionID)
+	t = NewTerminalInstance(ctx, logger, key, container, command, tm.chanInstance, sessionID)
+	tm.instances.Store(t.ID(), t)
+	pod, err := tm.objectStore.Get(ctx, key)
 	if err != nil {
 		return nil, err
 	}
-	if !ok {
+	if pod == nil {
 		return nil, errors.New("pod not found")
 	}
+
+	logger.Debugf("NewTerminalInstance created for", pod.GetName(), pod.GetUID())
 
 	req := tm.restClient.Post().
 		Resource("pods").
@@ -115,7 +131,7 @@ func (tm *manager) Create(ctx context.Context, logger log.Logger, key store.Key,
 		Command:   parseCommand(command),
 		Stdin:     true,
 		Stdout:    true,
-		Stderr:    true,
+		Stderr:    false,
 		TTY:       true,
 	}, scheme.ParameterCodec)
 
@@ -144,7 +160,6 @@ func (tm *manager) Create(ctx context.Context, logger log.Logger, key store.Key,
 		t.Stop()
 		logger.Debugf("stopping stream command")
 	}()
-
 	return t, nil
 }
 
@@ -154,6 +169,18 @@ func (tm *manager) Get(id string) (Instance, bool) {
 		return nil, ok
 	}
 	return v.(Instance), ok
+}
+
+func (tm *manager) Find(key store.Key, sessionID string) (Instance, error) {
+	for _, terminalInstance := range tm.List(key.Namespace) {
+		if key == terminalInstance.Key() {
+			if len(terminalInstance.SessionID()) == 0 && len(sessionID) > 0 {
+				terminalInstance.SetSessionID(sessionID)
+			}
+			return terminalInstance, nil
+		}
+	}
+	return nil, errors.New("terminal not found")
 }
 
 func (tm *manager) List(namespace string) []Instance {

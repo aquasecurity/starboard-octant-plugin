@@ -11,6 +11,7 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -55,7 +56,7 @@ func (c *GRPCClient) Content(ctx context.Context, contentPath string) (component
 			Path: contentPath,
 		}
 
-		resp, err := c.client.Content(ctx, req)
+		resp, err := c.client.Content(ctx, req, grpc.WaitForReady(true))
 		if err != nil {
 			return errors.Wrap(err, "grpc client content")
 		}
@@ -86,7 +87,7 @@ func (c *GRPCClient) HandleAction(ctx context.Context, payload action.Payload) e
 			Payload: data,
 		}
 
-		_, err = c.client.HandleAction(ctx, req)
+		_, err = c.client.HandleAction(ctx, req, grpc.WaitForReady(true))
 		if err != nil {
 			if s, isStatus := status.FromError(err); isStatus {
 				return errors.Errorf("grpc error: %s", s.Message())
@@ -104,10 +105,14 @@ func (c *GRPCClient) HandleAction(ctx context.Context, payload action.Payload) e
 func (c *GRPCClient) Navigation(ctx context.Context) (navigation.Navigation, error) {
 	var entries navigation.Navigation
 
+	if ctx.Err() == context.Canceled {
+		return navigation.Navigation{}, nil
+	}
+
 	err := c.run(func() error {
 		req := &dashboard.NavigationRequest{}
 
-		resp, err := c.client.Navigation(ctx, req)
+		resp, err := c.client.Navigation(ctx, req, grpc.WaitForReady(true))
 		if err != nil {
 			return errors.Wrap(err, "grpc client response")
 		}
@@ -133,7 +138,7 @@ func (c *GRPCClient) Register(ctx context.Context, dashboardAPIAddress string) (
 			DashboardAPIAddress: dashboardAPIAddress,
 		}
 
-		resp, err := c.client.Register(ctx, registerRequest)
+		resp, err := c.client.Register(ctx, registerRequest, grpc.WaitForReady(true))
 		if err != nil {
 			spew.Dump(err)
 			return errors.WithMessage(err, "unable to call register function")
@@ -167,7 +172,7 @@ func (c *GRPCClient) ObjectStatus(ctx context.Context, object runtime.Object) (O
 			return err
 		}
 
-		resp, err := c.client.ObjectStatus(ctx, in)
+		resp, err := c.client.ObjectStatus(ctx, in, grpc.WaitForReady(true))
 		if err != nil {
 			return errors.Wrap(err, "grpc client object status")
 		}
@@ -201,7 +206,7 @@ func (c *GRPCClient) Print(ctx context.Context, object runtime.Object) (PrintRes
 			return err
 		}
 
-		resp, err := c.client.Print(ctx, in)
+		resp, err := c.client.Print(ctx, in, grpc.WaitForReady(true))
 		if err != nil {
 			return errors.Wrap(err, "grpc client print")
 		}
@@ -262,7 +267,7 @@ func (c *GRPCClient) PrintTab(ctx context.Context, object runtime.Object) (TabRe
 			return err
 		}
 
-		resp, err := c.client.PrintTab(ctx, in)
+		resp, err := c.client.PrintTab(ctx, in, grpc.WaitForReady(true))
 		if err != nil {
 			return errors.Wrap(err, "grpc client print tab")
 		}
