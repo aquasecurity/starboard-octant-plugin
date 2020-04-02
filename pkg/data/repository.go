@@ -17,6 +17,7 @@ const (
 	WorkloadKindDeployment = "Deployment"
 	WorkloadKindDaemonSet  = "DaemonSet"
 	KindNamespace          = "Namespace"
+	KindNode               = "Node"
 )
 
 const (
@@ -26,8 +27,9 @@ const (
 )
 
 const (
-	vulnerabilitiesAPIVersion = "aquasecurity.github.com/v1alpha1"
-	vulnerabilitiesKind       = "Vulnerability"
+	aquaSecurityAPIVersion     = "aquasecurity.github.com/v1alpha1"
+	vulnerabilitiesKind        = "Vulnerability"
+	CISKubernetesBenchmarkKind = "CISKubernetesBenchmark"
 )
 
 type Workload struct {
@@ -76,7 +78,7 @@ func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options Work
 
 func (r *Repository) GetVulnerabilitiesForNamespace(ctx context.Context, namespace string) (report ContainerImageScanReport, err error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
-		APIVersion: vulnerabilitiesAPIVersion,
+		APIVersion: aquaSecurityAPIVersion,
 		Kind:       vulnerabilitiesKind,
 		Namespace:  namespace,
 	})
@@ -120,7 +122,7 @@ func (r *Repository) GetVulnerabilitiesForNamespace(ctx context.Context, namespa
 
 func (r *Repository) GetVulnerabilitiesForWorkload(ctx context.Context, options Workload) (reports []ContainerImageScanReport, err error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
-		APIVersion: vulnerabilitiesAPIVersion,
+		APIVersion: aquaSecurityAPIVersion,
 		Kind:       vulnerabilitiesKind,
 		// TODO Report bug to Octant? Apparently the label selector doesn't work and I have to do filtering manually :(
 		//Selector: &labels.Set{
@@ -140,7 +142,7 @@ func (r *Repository) GetVulnerabilitiesForWorkload(ctx context.Context, options 
 	var reportList security.VulnerabilityList
 	err = json.Unmarshal(b, &reportList)
 	if err != nil {
-		err = fmt.Errorf("unmarshalling JSON to ImageScanReport: %w", err)
+		err = fmt.Errorf("unmarshalling JSON to VulnerabilityList: %w", err)
 		return
 	}
 	for _, item := range reportList.Items {
@@ -158,6 +160,38 @@ func (r *Repository) GetVulnerabilitiesForWorkload(ctx context.Context, options 
 	sort.SliceStable(reports, func(i, j int) bool {
 		return strings.Compare(reports[i].Name, reports[j].Name) < 0
 	})
+
+	return
+}
+
+func (r *Repository) GetCISKubernetesBenchmark(ctx context.Context, node string) (report security.CISKubernetesBenchmark, err error) {
+	unstructuredList, err := r.client.List(ctx, store.Key{
+		APIVersion: aquaSecurityAPIVersion,
+		Kind:       CISKubernetesBenchmarkKind,
+		Name:       node,
+	})
+	if err != nil {
+		err = fmt.Errorf("listing CIS Kubernetes Benchmarks: %w", err)
+		return
+	}
+	b, err := unstructuredList.MarshalJSON()
+	if err != nil {
+		err = fmt.Errorf("marshalling unstructured list to JSON: %w", err)
+		return
+	}
+	var reportList security.CISKubernetesBenchmarkList
+	err = json.Unmarshal(b, &reportList)
+	if err != nil {
+		err = fmt.Errorf("unmarshalling JSON to CISKubernetesBenchmarkList: %w", err)
+		return
+	}
+
+	for _, r := range reportList.Items {
+		if r.Name == node {
+			report = r
+			return
+		}
+	}
 
 	return
 }

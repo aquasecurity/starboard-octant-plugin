@@ -14,7 +14,7 @@ github.com/Azure/go-autorest/tracing
 # github.com/GeertJohan/go.rice v1.0.0
 github.com/GeertJohan/go.rice
 github.com/GeertJohan/go.rice/embedded
-# github.com/aquasecurity/k8s-security-crds v0.0.12
+# github.com/aquasecurity/k8s-security-crds v0.0.13
 github.com/aquasecurity/k8s-security-crds/pkg/apis/aquasecurity
 github.com/aquasecurity/k8s-security-crds/pkg/apis/aquasecurity/v1alpha1
 # github.com/daaku/go.zipexe v1.0.0
@@ -129,7 +129,7 @@ github.com/spf13/viper
 # github.com/stretchr/testify v1.4.0
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
-# github.com/vmware-tanzu/octant v0.11.0
+# github.com/vmware-tanzu/octant v0.11.1
 github.com/vmware-tanzu/octant/internal/cluster
 github.com/vmware-tanzu/octant/internal/gvk
 github.com/vmware-tanzu/octant/internal/log

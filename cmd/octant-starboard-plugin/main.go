@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -10,7 +11,6 @@ import (
 	security "github.com/aquasecurity/k8s-security-crds/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/octant-starboard-plugin/pkg/data"
 	"github.com/aquasecurity/octant-starboard-plugin/pkg/view"
-	"github.com/pkg/errors"
 	"github.com/vmware-tanzu/octant/pkg/plugin"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
@@ -24,6 +24,7 @@ const (
 )
 
 var (
+	nodeGVK       = schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Node"}
 	podGVK        = schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Pod"}
 	deploymentGVK = schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"}
 	daemonSetGVK  = schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "DaemonSet"}
@@ -40,7 +41,7 @@ func run(_ []string) (err error) {
 	log.SetPrefix("")
 
 	capabilities := &plugin.Capabilities{
-		SupportsTab:           []schema.GroupVersionKind{podGVK, deploymentGVK, daemonSetGVK, namespaceGVK},
+		SupportsTab:           []schema.GroupVersionKind{podGVK, deploymentGVK, daemonSetGVK, namespaceGVK, nodeGVK},
 		SupportsPrinterConfig: []schema.GroupVersionKind{podGVK, deploymentGVK, daemonSetGVK},
 		IsModule:              false,
 	}
@@ -78,52 +79,53 @@ func handleVulnerabilitiesTab(request *service.PrintRequest) (tag plugin.TabResp
 		return handleVulnerabilitiesTabForWorkload(request, data.Workload{Kind: kind, Name: name})
 	case data.KindNamespace:
 		return handleVulnerabilitiesTabForNamespace(request, name)
+	case data.KindNode:
+		return handleCISBenchmarkTabForNode(request, name)
 	}
 
 	return
 }
 
-func handleVulnerabilitiesTabForWorkload(request *service.PrintRequest, workload data.Workload) (tab plugin.TabResponse, err error) {
+func handleVulnerabilitiesTabForWorkload(request *service.PrintRequest, workload data.Workload) (tabResponse plugin.TabResponse, err error) {
 	repository := data.NewRepository(request.DashboardClient)
 	reports, err := repository.GetVulnerabilitiesForWorkload(request.Context(), workload)
 	if err != nil {
 		return
 	}
 
-	tab = plugin.TabResponse{Tab: createVulnerabilitiesTab(reports)}
+	tab := component.NewTabWithContents(view.NewVulnerabilitiesReport(reports))
+	tabResponse = plugin.TabResponse{Tab: tab}
 
 	return
 }
 
-func handleVulnerabilitiesTabForNamespace(request *service.PrintRequest, namespace string) (tab plugin.TabResponse, err error) {
+func handleVulnerabilitiesTabForNamespace(request *service.PrintRequest, namespace string) (tabResponse plugin.TabResponse, err error) {
 	repository := data.NewRepository(request.DashboardClient)
 	reports, err := repository.GetVulnerabilitiesForNamespace(request.Context(), namespace)
 	if err != nil {
 		return
 	}
-	tab = plugin.TabResponse{Tab: createVulnerabilitiesTab([]data.ContainerImageScanReport{reports})}
+	tab := component.NewTabWithContents(view.NewVulnerabilitiesReport([]data.ContainerImageScanReport{reports}))
+	tabResponse = plugin.TabResponse{Tab: tab}
 	return
 }
 
-func createVulnerabilitiesTab(reports []data.ContainerImageScanReport) *component.Tab {
-	flexLayout := component.NewFlexLayout("Vulnerabilities")
-	var items []component.FlexLayoutItem
-	for _, containerReport := range reports {
-		items = append(items, component.FlexLayoutItem{
-			Width: component.WidthFull,
-			View:  view.NewImageScanReport(containerReport.Name, containerReport.Report),
-		})
+func handleCISBenchmarkTabForNode(request *service.PrintRequest, node string) (tabResponse plugin.TabResponse, err error) {
+	repository := data.NewRepository(request.DashboardClient)
+	report, err := repository.GetCISKubernetesBenchmark(request.Context(), node)
+	if err != nil {
+		return
 	}
 
-	flexLayout.AddSections(items)
-
-	return component.NewTabWithContents(*flexLayout)
+	tab := component.NewTabWithContents(view.NewCISKubernetesBenchmarksReport(report))
+	tabResponse = plugin.TabResponse{Tab: tab}
+	return
 }
 
 // handlePrinterConfig is called when Octant wants to print an object.
 func handlePrinterConfig(request *service.PrintRequest) (plugin.PrintResponse, error) {
 	if request.Object == nil {
-		return plugin.PrintResponse{}, errors.Errorf("object is nil")
+		return plugin.PrintResponse{}, errors.New("object is nil")
 	}
 
 	repository := data.NewRepository(request.DashboardClient)
@@ -153,13 +155,9 @@ func handlePrinterConfig(request *service.PrintRequest) (plugin.PrintResponse, e
 		return plugin.PrintResponse{}, err
 	}
 
-	vs := component.NewSummary("Vulnerabilities",
-		summarySectionsFor(summary)...,
-	)
-
 	printItems = append(printItems, component.FlexLayoutItem{
 		Width: component.WidthHalf,
-		View:  vs,
+		View:  view.NewVulnerabilitiesSummary("Vulnerabilities", summary),
 	})
 
 	// When printing an object, you can create multiple types of content. In this
