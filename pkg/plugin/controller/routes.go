@@ -1,4 +1,4 @@
-package router
+package controller
 
 import (
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"

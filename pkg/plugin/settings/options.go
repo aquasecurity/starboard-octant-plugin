@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/aquasecurity/octant-starboard-plugin/pkg/plugin/controller"
-	"github.com/aquasecurity/octant-starboard-plugin/pkg/plugin/router"
 	"github.com/vmware-tanzu/octant/pkg/navigation"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 )
@@ -21,7 +20,7 @@ func GetOptions() []service.PluginOption {
 					IconName: rootNavIcon,
 				}, nil
 			},
-			router.InitRoutes,
+			controller.InitRoutes,
 		),
 	}
 }

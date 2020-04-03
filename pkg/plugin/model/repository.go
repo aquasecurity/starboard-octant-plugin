@@ -1,4 +1,4 @@
-package data
+package model
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	security "github.com/aquasecurity/k8s-security-crds/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
@@ -86,12 +88,8 @@ func (r *Repository) GetVulnerabilitiesForNamespace(ctx context.Context, namespa
 	if err != nil {
 		return
 	}
-	b, err := unstructuredList.MarshalJSON()
-	if err != nil {
-		return
-	}
 	var reportList security.VulnerabilityList
-	err = json.Unmarshal(b, &reportList)
+	err = r.structure(unstructuredList, &reportList)
 	if err != nil {
 		return
 	}
@@ -135,13 +133,8 @@ func (r *Repository) GetVulnerabilitiesForWorkload(ctx context.Context, options 
 		err = fmt.Errorf("listing vulnerabilities: %w", err)
 		return
 	}
-	b, err := unstructuredList.MarshalJSON()
-	if err != nil {
-		err = fmt.Errorf("marshalling unstructured list to JSON: %w", err)
-		return
-	}
 	var reportList security.VulnerabilityList
-	err = json.Unmarshal(b, &reportList)
+	err = r.structure(unstructuredList, &reportList)
 	if err != nil {
 		err = fmt.Errorf("unmarshalling JSON to VulnerabilityList: %w", err)
 		return
@@ -175,13 +168,8 @@ func (r *Repository) GetCISKubernetesBenchmark(ctx context.Context, node string)
 		err = fmt.Errorf("listing CIS Kubernetes Benchmarks: %w", err)
 		return
 	}
-	b, err := unstructuredList.MarshalJSON()
-	if err != nil {
-		err = fmt.Errorf("marshalling unstructured list to JSON: %w", err)
-		return
-	}
 	var reportList security.CISKubernetesBenchmarkList
-	err = json.Unmarshal(b, &reportList)
+	err = r.structure(unstructuredList, &reportList)
 	if err != nil {
 		err = fmt.Errorf("unmarshalling JSON to CISKubernetesBenchmarkList: %w", err)
 		return
@@ -205,12 +193,8 @@ func (r *Repository) GetKubeHunterReport(ctx context.Context) (report security.K
 	if err != nil {
 		return
 	}
-	b, err := unstructuredList.MarshalJSON()
-	if err != nil {
-		return
-	}
 	var reportList security.KubeHunterReportList
-	err = json.Unmarshal(b, &reportList)
+	err = r.structure(unstructuredList, &reportList)
 	if err != nil {
 		return
 	}
@@ -222,5 +206,14 @@ func (r *Repository) GetKubeHunterReport(ctx context.Context) (report security.K
 		}
 	}
 
+	return
+}
+
+func (r *Repository) structure(ul *unstructured.UnstructuredList, v interface{}) (err error) {
+	b, err := ul.MarshalJSON()
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(b, v)
 	return
 }

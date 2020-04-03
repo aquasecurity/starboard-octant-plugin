@@ -2,13 +2,12 @@ package controller
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
-	"time"
+
+	"github.com/aquasecurity/octant-starboard-plugin/pkg/plugin/model"
 
 	security "github.com/aquasecurity/k8s-security-crds/pkg/apis/aquasecurity/v1alpha1"
-	"github.com/aquasecurity/octant-starboard-plugin/pkg/data"
-	"github.com/aquasecurity/octant-starboard-plugin/pkg/view"
+	"github.com/aquasecurity/octant-starboard-plugin/pkg/plugin/view"
 	"github.com/vmware-tanzu/octant/pkg/plugin"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
@@ -33,19 +32,19 @@ func HandleVulnerabilitiesTab(request *service.PrintRequest) (tag plugin.TabResp
 	}
 
 	switch kind {
-	case data.WorkloadKindPod, data.WorkloadKindDeployment, data.WorkloadKindDaemonSet:
-		return handleVulnerabilitiesTabForWorkload(request, data.Workload{Kind: kind, Name: name})
-	case data.KindNamespace:
+	case model.WorkloadKindPod, model.WorkloadKindDeployment, model.WorkloadKindDaemonSet:
+		return handleVulnerabilitiesTabForWorkload(request, model.Workload{Kind: kind, Name: name})
+	case model.KindNamespace:
 		return handleVulnerabilitiesTabForNamespace(request, name)
-	case data.KindNode:
+	case model.KindNode:
 		return handleCISBenchmarkTabForNode(request, name)
 	}
 
 	return
 }
 
-func handleVulnerabilitiesTabForWorkload(request *service.PrintRequest, workload data.Workload) (tabResponse plugin.TabResponse, err error) {
-	repository := data.NewRepository(request.DashboardClient)
+func handleVulnerabilitiesTabForWorkload(request *service.PrintRequest, workload model.Workload) (tabResponse plugin.TabResponse, err error) {
+	repository := model.NewRepository(request.DashboardClient)
 	reports, err := repository.GetVulnerabilitiesForWorkload(request.Context(), workload)
 	if err != nil {
 		return
@@ -58,18 +57,18 @@ func handleVulnerabilitiesTabForWorkload(request *service.PrintRequest, workload
 }
 
 func handleVulnerabilitiesTabForNamespace(request *service.PrintRequest, namespace string) (tabResponse plugin.TabResponse, err error) {
-	repository := data.NewRepository(request.DashboardClient)
+	repository := model.NewRepository(request.DashboardClient)
 	reports, err := repository.GetVulnerabilitiesForNamespace(request.Context(), namespace)
 	if err != nil {
 		return
 	}
-	tab := component.NewTabWithContents(view.NewVulnerabilitiesReport([]data.ContainerImageScanReport{reports}))
+	tab := component.NewTabWithContents(view.NewVulnerabilitiesReport([]model.ContainerImageScanReport{reports}))
 	tabResponse = plugin.TabResponse{Tab: tab}
 	return
 }
 
 func handleCISBenchmarkTabForNode(request *service.PrintRequest, node string) (tabResponse plugin.TabResponse, err error) {
-	repository := data.NewRepository(request.DashboardClient)
+	repository := model.NewRepository(request.DashboardClient)
 	report, err := repository.GetCISKubernetesBenchmark(request.Context(), node)
 	if err != nil {
 		return
@@ -86,14 +85,7 @@ func HandlePrinterConfig(request *service.PrintRequest) (plugin.PrintResponse, e
 		return plugin.PrintResponse{}, errors.New("object is nil")
 	}
 
-	repository := data.NewRepository(request.DashboardClient)
-
-	var printItems []component.FlexLayoutItem
-
-	printItems = append(printItems, component.FlexLayoutItem{
-		Width: component.WidthHalf,
-		View:  view.NewDebug(fmt.Sprintf("%v", request.Object)),
-	})
+	repository := model.NewRepository(request.DashboardClient)
 
 	accessor := meta.NewAccessor()
 	kind, err := accessor.Kind(request.Object)
@@ -105,18 +97,13 @@ func HandlePrinterConfig(request *service.PrintRequest) (plugin.PrintResponse, e
 		return plugin.PrintResponse{}, err
 	}
 
-	summary, err := repository.GetVulnerabilitiesSummary(request.Context(), data.Workload{
+	summary, err := repository.GetVulnerabilitiesSummary(request.Context(), model.Workload{
 		Kind: kind,
 		Name: name,
 	})
 	if err != nil {
 		return plugin.PrintResponse{}, err
 	}
-
-	printItems = append(printItems, component.FlexLayoutItem{
-		Width: component.WidthHalf,
-		View:  view.NewVulnerabilitiesSummary("Vulnerabilities", summary),
-	})
 
 	// When printing an object, you can create multiple types of content. In this
 	// example, the plugin is:
@@ -126,11 +113,7 @@ func HandlePrinterConfig(request *service.PrintRequest) (plugin.PrintResponse, e
 	// * create a new piece of content that will be embedded in the
 	//   summary section for the component.
 	return plugin.PrintResponse{
-		Config: []component.SummarySection{
-			{Header: "Last Scanned At", Content: component.NewText(fmt.Sprintf("%s", time.Now().Format(time.RFC3339)))},
-		},
 		Status: summarySectionsFor(summary),
-		Items:  printItems,
 	}, nil
 }
 

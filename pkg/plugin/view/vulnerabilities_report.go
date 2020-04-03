@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/aquasecurity/octant-starboard-plugin/pkg/data"
+	"github.com/aquasecurity/octant-starboard-plugin/pkg/plugin/model"
 
 	sec "github.com/aquasecurity/k8s-security-crds/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 )
 
-func NewVulnerabilitiesReport(reports []data.ContainerImageScanReport) (flexLayout component.FlexLayout) {
+func NewVulnerabilitiesReport(reports []model.ContainerImageScanReport) (flexLayout component.FlexLayout) {
 	flexLayout = *component.NewFlexLayout("Vulnerabilities")
 	var items []component.FlexLayoutItem
 	for _, containerReport := range reports {

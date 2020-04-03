@@ -1,11 +1,11 @@
-package router
+package controller
 
 import (
 	"fmt"
 
-	"github.com/aquasecurity/octant-starboard-plugin/pkg/data"
+	"github.com/aquasecurity/octant-starboard-plugin/pkg/plugin/model"
 
-	"github.com/aquasecurity/octant-starboard-plugin/pkg/view"
+	"github.com/aquasecurity/octant-starboard-plugin/pkg/plugin/view"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 )
@@ -23,7 +23,7 @@ func rootHandler(request service.Request) (component.ContentResponse, error) {
 func buildRootViewForRequest(request service.Request) (*component.FlexLayout, error) {
 	flexLayout := component.NewFlexLayout("")
 
-	repository := data.NewRepository(request.DashboardClient())
+	repository := model.NewRepository(request.DashboardClient())
 	report, err := repository.GetKubeHunterReport(request.Context())
 	if err != nil {
 		return nil, err
