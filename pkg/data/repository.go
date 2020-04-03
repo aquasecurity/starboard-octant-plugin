@@ -30,6 +30,7 @@ const (
 	aquaSecurityAPIVersion     = "aquasecurity.github.com/v1alpha1"
 	vulnerabilitiesKind        = "Vulnerability"
 	CISKubernetesBenchmarkKind = "CISKubernetesBenchmark"
+	KubeHunterReportKind       = "KubeHunterReport"
 )
 
 type Workload struct {
@@ -188,6 +189,34 @@ func (r *Repository) GetCISKubernetesBenchmark(ctx context.Context, node string)
 
 	for _, r := range reportList.Items {
 		if r.Name == node {
+			report = r
+			return
+		}
+	}
+
+	return
+}
+
+func (r *Repository) GetKubeHunterReport(ctx context.Context) (report security.KubeHunterReport, err error) {
+	unstructuredList, err := r.client.List(ctx, store.Key{
+		APIVersion: aquaSecurityAPIVersion,
+		Kind:       KubeHunterReportKind,
+	})
+	if err != nil {
+		return
+	}
+	b, err := unstructuredList.MarshalJSON()
+	if err != nil {
+		return
+	}
+	var reportList security.KubeHunterReportList
+	err = json.Unmarshal(b, &reportList)
+	if err != nil {
+		return
+	}
+
+	for _, r := range reportList.Items {
+		if r.Name == "cluster" {
 			report = r
 			return
 		}

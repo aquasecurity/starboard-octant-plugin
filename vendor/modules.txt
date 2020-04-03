@@ -14,7 +14,7 @@ github.com/Azure/go-autorest/tracing
 # github.com/GeertJohan/go.rice v1.0.0
 github.com/GeertJohan/go.rice
 github.com/GeertJohan/go.rice/embedded
-# github.com/aquasecurity/k8s-security-crds v0.0.13
+# github.com/aquasecurity/k8s-security-crds v0.0.14
 github.com/aquasecurity/k8s-security-crds/pkg/apis/aquasecurity
 github.com/aquasecurity/k8s-security-crds/pkg/apis/aquasecurity/v1alpha1
 # github.com/daaku/go.zipexe v1.0.0
