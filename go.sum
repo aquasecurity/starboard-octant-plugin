@@ -38,8 +38,8 @@ github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuy
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883/go.mod h1:rCTlJbsFo29Kk6CurOXKm700vrz8f0KW0JNfpkRJY/8=
 github.com/apache/thrift v0.12.0/go.mod h1:cp2SuWMxlEZw2r+iP2GNCdIi4C1qmUzdZFSVb+bacwQ=
-github.com/aquasecurity/k8s-security-crds v0.0.12 h1:5iOvnSXRZEcqbAT9KYKHCdhA1VWH3Bla/6JOyjAWlro=
-github.com/aquasecurity/k8s-security-crds v0.0.12/go.mod h1:G7RQ8h2b2tkcGZJHBong/aROdZLMJtSGxwB7BF1s7Xk=
+github.com/aquasecurity/k8s-security-crds v0.0.13 h1:oQaGqBtlt2uZpjwJXNe7cWe+5CxHT9chq+I1RoHc+GM=
+github.com/aquasecurity/k8s-security-crds v0.0.13/go.mod h1:G7RQ8h2b2tkcGZJHBong/aROdZLMJtSGxwB7BF1s7Xk=
 github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6/go.mod h1:grANhF5doyWs3UAsr3K4I6qtAmlQcZDesFNEHPZAzj8=
 github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf/go.mod h1:lB+ZfQJz7igIIfQNfa7Ml4HSf2uFQQRzpGGRXenZAgY=
 github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a/go.mod h1:lB+ZfQJz7igIIfQNfa7Ml4HSf2uFQQRzpGGRXenZAgY=
@@ -368,8 +368,8 @@ github.com/urfave/cli v1.20.0/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijb
 github.com/valyala/bytebufferpool v1.0.0/go.mod h1:6bBcMArwyJ5K/AmCkWv1jt77kVWyCJ6HpOuEn7z0Csc=
 github.com/valyala/fasttemplate v1.0.1/go.mod h1:UQGH1tvbgY+Nz5t2n7tXsz52dQxojPUpymEIMZ47gx8=
 github.com/vektah/gqlparser v1.1.2/go.mod h1:1ycwN7Ij5njmMkPPAOaRFY4rET2Enx7IkVv3vaXspKw=
-github.com/vmware-tanzu/octant v0.11.0 h1:1ganDAIiswCL2QDu/C0pczWoraSMIWMtq79GOCqnrr8=
-github.com/vmware-tanzu/octant v0.11.0/go.mod h1:ree4Qu6ULumg1MlGrAG7avEQx3+NjWPc0Zs4nQWOmQE=
+github.com/vmware-tanzu/octant v0.11.1 h1:04qHGWp/pHcJj/3MahuXpM2ZvjbVVc4YK1o1kbwtgCU=
+github.com/vmware-tanzu/octant v0.11.1/go.mod h1:ree4Qu6ULumg1MlGrAG7avEQx3+NjWPc0Zs4nQWOmQE=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
 go.etcd.io/bbolt v1.3.2/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=

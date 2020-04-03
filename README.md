@@ -33,13 +33,13 @@ kubectl get vulnerabilities \
 assuming that `kubectl starboard find vulnerabilities pod/nginx` command was run and the vulnerabilities report saved
 as a `vulnerabilities.aquasecurity.github.com` resource.
 
-![](./docs/images/pod_vulnerabilities.png)
+![](./docs/images/vulnerabilities_pod.png)
 
 ### Show vulnerabilities summary
 
 Shows the summary of vulnerabilities found in the Pod within the *Status* card.
 
-![](./docs/images/pod_vulnerabilities_summary.png)
+![](./docs/images/vulnerabilities_summary_pod.png)
 
 ### List vulnerabilities of [Deployment][k8s-deployment]
 
@@ -55,7 +55,20 @@ kubectl get vulns
 assuming that `kubectl starboard find vulns deployments/nginx` command was run and the vulnerabilities report saved
 as a `vulnerabilities.aquasecurity.github.com` resource.
 
-![](./docs/images/deployment_vulnerabilities.png)
+![](./docs/images/vulnerabilities_deploy.png)
+
+### CIS Kubernetes Benchmark checks for [Node][k8s-node]
+
+This is equivalent of
+
+```
+k get ciskubebench minikube -o yaml
+```
+
+assuming that `kubectl starboard kube-bench` command was run and the output of running CIS Kubernetes Benchmarks checks
+saved as a `ciskubernetesbenchmarks.aquasecurity.github.com` resource.
+
+![](./docs/images/cis_kubernetes_benchmark_node.png)
 
 ## Uninstall
 
@@ -81,3 +94,4 @@ This repository is available under the [Apache License 2.0][license].
 [k8s-security-crds]: https://github.com/aquasecurity/k8s-security-crds
 [k8s-pod]: https://kubernetes.io/docs/concepts/workloads/pods/pod/
 [k8s-deployment]: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+[k8s-node]: https://kubernetes.io/docs/concepts/architecture/nodes/
