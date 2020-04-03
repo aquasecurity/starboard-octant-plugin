@@ -35,6 +35,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&VulnerabilityList{},
 		&CISKubernetesBenchmark{},
 		&CISKubernetesBenchmarkList{},
+		&KubeHunterReport{},
+		&KubeHunterReportList{},
 	)
 	meta.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil
