@@ -5,7 +5,7 @@
 # Octant Starboard Plugin
 
 This is an [Octant][octant] plugin for [Starboard][starboard] which provides visibility into vulnerability assessment
-reports for Kubernetes workloads stored as [custom security resources][k8s-security-crds].
+reports for Kubernetes workloads stored as [custom security resources][starboard-crds].
 
 ## Install
 
@@ -91,7 +91,7 @@ This repository is available under the [Apache License 2.0][license].
 [octant]: https://octant.dev/
 [starboard]: https://github.com/aquasecurity/starboard
 [trivy]: https://github.com/aquasecurity/trivy
-[k8s-security-crds]: https://github.com/aquasecurity/k8s-security-crds
+[starboard-crds]: https://github.com/aquasecurity/starboard-crds
 [k8s-pod]: https://kubernetes.io/docs/concepts/workloads/pods/pod/
 [k8s-deployment]: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
 [k8s-node]: https://kubernetes.io/docs/concepts/architecture/nodes/

@@ -9,7 +9,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	security "github.com/aquasecurity/k8s-security-crds/pkg/apis/aquasecurity/v1alpha1"
+	security "github.com/aquasecurity/starboard-crds/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 	"github.com/vmware-tanzu/octant/pkg/store"
 )

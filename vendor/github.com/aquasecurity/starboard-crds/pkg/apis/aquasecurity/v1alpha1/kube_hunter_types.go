@@ -1,7 +1,7 @@
 package v1alpha1
 
 import (
-	"github.com/aquasecurity/k8s-security-crds/pkg/apis/aquasecurity"
+	"github.com/aquasecurity/starboard-crds/pkg/apis/aquasecurity"
 	extv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
