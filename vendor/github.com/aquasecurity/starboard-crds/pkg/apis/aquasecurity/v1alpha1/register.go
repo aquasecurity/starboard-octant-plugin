@@ -5,7 +5,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/aquasecurity/k8s-security-crds/pkg/apis/aquasecurity"
+	"github.com/aquasecurity/starboard-crds/pkg/apis/aquasecurity"
 )
 
 // SchemeGroupVersion is group version used to register these objects

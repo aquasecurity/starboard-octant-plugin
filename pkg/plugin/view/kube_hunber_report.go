@@ -1,7 +1,7 @@
 package view
 
 import (
-	sec "github.com/aquasecurity/k8s-security-crds/pkg/apis/aquasecurity/v1alpha1"
+	sec "github.com/aquasecurity/starboard-crds/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 )
 

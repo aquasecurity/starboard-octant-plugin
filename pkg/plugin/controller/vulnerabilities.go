@@ -6,8 +6,8 @@ import (
 
 	"github.com/aquasecurity/octant-starboard-plugin/pkg/plugin/model"
 
-	security "github.com/aquasecurity/k8s-security-crds/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/octant-starboard-plugin/pkg/plugin/view"
+	security "github.com/aquasecurity/starboard-crds/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/plugin"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
