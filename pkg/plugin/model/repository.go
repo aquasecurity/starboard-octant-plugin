@@ -18,6 +18,7 @@ const (
 	WorkloadKindPod        = "Pod"
 	WorkloadKindDeployment = "Deployment"
 	WorkloadKindDaemonSet  = "DaemonSet"
+	KindStatefulSet        = "StatefulSet"
 	KindNamespace          = "Namespace"
 	KindNode               = "Node"
 )
@@ -74,6 +75,35 @@ func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options Work
 			default:
 				vs.UnknownCount++
 			}
+		}
+	}
+	return
+}
+
+func (r *Repository) GetConfigAudit(ctx context.Context, options Workload) (ca *security.ConfigAudit, err error) {
+	unstructuredList, err := r.client.List(ctx, store.Key{
+		APIVersion: aquaSecurityAPIVersion,
+		Kind:       security.ConfigAuditReportKind,
+	})
+	if err != nil {
+		err = fmt.Errorf("listing config audit reports: %w", err)
+		return
+	}
+	if len(unstructuredList.Items) == 0 {
+		return
+	}
+	var reportList security.ConfigAuditReportList
+	err = r.structure(unstructuredList, &reportList)
+	if err != nil {
+		err = fmt.Errorf("unmarshalling JSON to ConfigAuditReportList: %w", err)
+		return
+	}
+
+	for _, item := range reportList.Items {
+		if item.Labels[labelWorkloadKind] == options.Kind &&
+			item.Labels[labelWorkloadName] == options.Name {
+			ca = &item.Report
+			return
 		}
 	}
 	return

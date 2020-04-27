@@ -7,6 +7,13 @@
 This is an [Octant][octant] plugin for [Starboard][starboard] which provides visibility into vulnerability assessment
 reports for Kubernetes workloads stored as [custom security resources][starboard-crds].
 
+## Build
+
+```
+$ export GOPRIVATE=github.com/aquasecurity/starboard-crds
+$ make build
+```
+
 ## Install
 
 Octant should first be installed. Run the following command to build and install the plugin:

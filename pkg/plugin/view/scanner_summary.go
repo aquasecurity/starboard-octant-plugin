@@ -27,8 +27,9 @@ func NewScannerSummary(scanner sec.Scanner) (c *component.Summary) {
 	return
 }
 
+// TODO Rename to Report Metadata
 func NewReportSummary(generatedAt time.Time) (c *component.Summary) {
-	c = component.NewSummary("Report")
+	c = component.NewSummary("Report Metadata")
 	sections := []component.SummarySection{
 		{
 			Header:  "Generated At",
