@@ -7,7 +7,7 @@ import (
 	"github.com/aquasecurity/octant-starboard-plugin/pkg/plugin/model"
 
 	"github.com/aquasecurity/octant-starboard-plugin/pkg/plugin/view"
-	security "github.com/aquasecurity/starboard-crds/pkg/apis/aquasecurity/v1alpha1"
+	security "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/plugin"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
@@ -69,12 +69,12 @@ func handleVulnerabilitiesTabForNamespace(request *service.PrintRequest, namespa
 
 func handleCISBenchmarkTabForNode(request *service.PrintRequest, node string) (tabResponse plugin.TabResponse, err error) {
 	repository := model.NewRepository(request.DashboardClient)
-	report, err := repository.GetCISKubernetesBenchmark(request.Context(), node)
+	report, err := repository.GetCISKubeBenchReport(request.Context(), node)
 	if err != nil {
 		return
 	}
 
-	tab := component.NewTabWithContents(view.NewCISKubernetesBenchmarksReport(report))
+	tab := component.NewTabWithContents(view.NewCISKubeBenchReport(report))
 	tabResponse = plugin.TabResponse{Tab: tab}
 	return
 }
