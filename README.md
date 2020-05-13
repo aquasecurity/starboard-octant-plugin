@@ -12,6 +12,7 @@ reports for Kubernetes workloads stored as [custom security resources][starboard
 Octant should first be installed. Run the following command to build and install the plugin:
 
 ```
+$ export GOPRIVATE=github.com/aquasecurity/starboard
 $ make deploy
 ```
 

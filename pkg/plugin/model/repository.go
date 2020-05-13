@@ -7,9 +7,11 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/aquasecurity/starboard/pkg/kube"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	security "github.com/aquasecurity/starboard-crds/pkg/apis/aquasecurity/v1alpha1"
+	security "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 	"github.com/vmware-tanzu/octant/pkg/store"
 )
@@ -123,7 +125,7 @@ func (r *Repository) GetVulnerabilitiesForWorkload(ctx context.Context, options 
 	unstructuredList, err := r.client.List(ctx, store.Key{
 		APIVersion: aquaSecurityAPIVersion,
 		Kind:       vulnerabilitiesKind,
-		// TODO Report bug to Octant? Apparently the label selector doesn't work and I have to do filtering manually :(
+		// TODO Report bug to Octant? Apparently the label selector doesn't work and I have to do filtering manually in a loop :(
 		//Selector: &labels.Set{
 		//	labelWorkloadKind: options.Kind,
 		//	labelWorkloadName: options.Name,
@@ -158,7 +160,7 @@ func (r *Repository) GetVulnerabilitiesForWorkload(ctx context.Context, options 
 	return
 }
 
-func (r *Repository) GetCISKubernetesBenchmark(ctx context.Context, node string) (report security.CISKubernetesBenchmark, err error) {
+func (r *Repository) GetCISKubeBenchReport(ctx context.Context, node string) (report *security.CISKubernetesBenchmark, err error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
 		APIVersion: aquaSecurityAPIVersion,
 		Kind:       CISKubernetesBenchmarkKind,
@@ -176,8 +178,10 @@ func (r *Repository) GetCISKubernetesBenchmark(ctx context.Context, node string)
 	}
 
 	for _, r := range reportList.Items {
-		if r.Name == node {
-			report = r
+		if r.Labels[kube.LabelResourceKind] == "Node" &&
+			r.Labels[kube.LabelResourceName] == node &&
+			r.Labels[kube.LabelHistoryLatest] == "true" {
+			report = &r
 			return
 		}
 	}
