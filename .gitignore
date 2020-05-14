@@ -2,3 +2,5 @@
 *.iml
 
 bin/
+
+dist/

@@ -1,0 +1,29 @@
+env:
+  - GO111MODULE=on
+builds:
+  - id: octant-starboard-plugin
+    main: ./cmd/octant-starboard-plugin/main.go
+    binary: octant-starboard-plugin
+    flags:
+      - -mod=vendor
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+archives:
+  - name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    replacements:
+      amd64: x86_64
+checksum:
+  name_template: "checksums.txt"
+snapshot:
+  name_template: "{{ .FullCommit }}"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs'
+      - '^test'
