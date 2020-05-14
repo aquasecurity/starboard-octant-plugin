@@ -8,7 +8,7 @@ import (
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 )
 
-func NewCISKubeBenchReport(benchmark *starboard.CISKubernetesBenchmark) (flexLayout component.FlexLayout) {
+func NewCISKubeBenchReport(benchmark *starboard.CISKubeBenchReport) (flexLayout component.FlexLayout) {
 	flexLayout = *component.NewFlexLayout("CIS Kubernetes Benchmark")
 	uiSections := make([]component.FlexLayoutItem, len(benchmark.Report.Sections))
 
@@ -38,7 +38,7 @@ func NewCISKubeBenchReport(benchmark *starboard.CISKubernetesBenchmark) (flexLay
 	return
 }
 
-func createTableForSection(section starboard.CISKubernetesBenchmarkSection) component.Component {
+func createTableForSection(section starboard.CISKubeBenchSection) component.Component {
 	table := component.NewTableWithRows(
 		fmt.Sprintf("%s %s", section.ID, section.Text), "There are no results!",
 		component.NewTableCols("Status", "Number", "Description", "Scored"),
@@ -61,7 +61,7 @@ func createTableForSection(section starboard.CISKubernetesBenchmarkSection) comp
 }
 
 // TODO Implement summary counting
-func NewCISKubeBenchReportSummary(report *starboard.CISKubernetesBenchmark) (summary *component.Summary) {
+func NewCISKubeBenchReportSummary(report *starboard.CISKubeBenchReport) (summary *component.Summary) {
 	totalPass := 0
 	totalInfo := 0
 	totalWarn := 0
