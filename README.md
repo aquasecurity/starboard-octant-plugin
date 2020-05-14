@@ -26,13 +26,12 @@ This is equivalent of
 
 ```
 kubectl get vulnerabilities \
-  -l starboard.workload.kind=Pod \
-  -l starboard.workload.name=nginx \
+  -l starboard.workload.kind=Pod,starboard.workload.name=nginx \
   -o yaml
 ```
 
 assuming that `kubectl starboard find vulnerabilities pod/nginx` command was run and the vulnerabilities report saved
-as a `vulnerabilities.aquasecurity.github.com` resource.
+as a `vulnerabilities.aquasecurity.github.io` resource.
 
 ![](./docs/images/vulnerabilities_pod.png)
 
@@ -48,13 +47,12 @@ This is equivalent of
 
 ```
 kubectl get vulns
-  -l starboard.workload.kind=Deployment \
-  -l starboard.workload.name=nginx \
+  -l starboard.workload.kind=Deployment,starboard.workload.name=nginx \
   -o yaml
 ```
 
 assuming that `kubectl starboard find vulns deployments/nginx` command was run and the vulnerabilities report saved
-as a `vulnerabilities.aquasecurity.github.com` resource.
+as a `vulnerabilities.aquasecurity.github.io` resource.
 
 ![](./docs/images/vulnerabilities_deploy.png)
 
@@ -63,11 +61,13 @@ as a `vulnerabilities.aquasecurity.github.com` resource.
 This is equivalent of
 
 ```
-k get ciskubebench minikube -o yaml
+kubectl get kubebench minikube \
+  -l starboard.history.latest=true,starboard.resource.name=minikube \
+  -o yaml
 ```
 
 assuming that `kubectl starboard kube-bench` command was run and the output of running CIS Kubernetes Benchmarks checks
-saved as a `ciskubernetesbenchmarks.aquasecurity.github.com` resource.
+saved as a `ciskubebenchreports.aquasecurity.github.io` resource.
 
 ![](./docs/images/cis_kubernetes_benchmark_node.png)
 
