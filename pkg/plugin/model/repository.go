@@ -31,7 +31,7 @@ const (
 )
 
 const (
-	aquaSecurityAPIVersion = "aquasecurity.github.com/v1alpha1"
+	aquaSecurityAPIVersion = "aquasecurity.github.io/v1alpha1"
 	vulnerabilitiesKind    = "Vulnerability"
 )
 
