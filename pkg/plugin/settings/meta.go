@@ -1,5 +1,9 @@
 package settings
 
+import (
+	"fmt"
+)
+
 const (
 	// This should stay lowercase for routing purposes
 	name        = "starboard"
@@ -8,10 +12,16 @@ const (
 	rootNavIcon = "boat"
 )
 
+type BuildInfo struct {
+	Version string
+	Commit  string
+	Date    string
+}
+
 func GetName() string {
 	return name
 }
 
-func GetDescription() string {
-	return description
+func GetDescription(info BuildInfo) string {
+	return fmt.Sprintf("%s (%s, %s, %s)", description, info.Version, info.Commit, info.Date)
 }

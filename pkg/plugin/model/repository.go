@@ -17,17 +17,13 @@ import (
 )
 
 const (
-	WorkloadKindPod        = "Pod"
-	WorkloadKindDeployment = "Deployment"
-	WorkloadKindDaemonSet  = "DaemonSet"
-	KindNamespace          = "Namespace"
-	KindNode               = "Node"
-)
-
-const (
-	labelWorkloadKind  = "starboard.workload.kind"
-	labelWorkloadName  = "starboard.workload.name"
-	labelContainerName = "starboard.container.name"
+	WorkloadKindPod           = "Pod"
+	WorkloadKindDeployment    = "Deployment"
+	WorkloadKindDaemonSet     = "DaemonSet"
+	StatefulSetKind           = "StatefulSet"
+	ReplicaSetKind            = "ReplicaSet"
+	ReplicationControllerKind = "ReplicationController"
+	KindNode                  = "Node"
 )
 
 const (
@@ -79,46 +75,6 @@ func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options Work
 	return
 }
 
-func (r *Repository) GetVulnerabilitiesForNamespace(ctx context.Context, namespace string) (report ContainerImageScanReport, err error) {
-	unstructuredList, err := r.client.List(ctx, store.Key{
-		APIVersion: aquaSecurityAPIVersion,
-		Kind:       vulnerabilitiesKind,
-		Namespace:  namespace,
-	})
-	if err != nil {
-		return
-	}
-	var reportList security.VulnerabilityList
-	err = r.structure(unstructuredList, &reportList)
-	if err != nil {
-		return
-	}
-
-	var vulnerabilities []security.VulnerabilityItem
-
-	for _, i := range reportList.Items {
-		if _, containerNameSpecified := i.Labels[labelContainerName]; !containerNameSpecified {
-			continue
-		}
-		vulnerabilities = append(vulnerabilities, i.Report.Vulnerabilities...)
-	}
-
-	sort.SliceStable(vulnerabilities, func(i, j int) bool {
-		return strings.Compare(vulnerabilities[i].VulnerabilityID, vulnerabilities[j].VulnerabilityID) < 0
-	})
-
-	report = ContainerImageScanReport{
-		Name: fmt.Sprintf("Namespace %s", namespace),
-		Report: security.Vulnerability{
-			Report: security.VulnerabilityReport{
-				Vulnerabilities: vulnerabilities,
-			},
-		},
-	}
-
-	return
-}
-
 func (r *Repository) GetVulnerabilitiesForWorkload(ctx context.Context, options Workload) (reports []ContainerImageScanReport, err error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
 		APIVersion: aquaSecurityAPIVersion,
@@ -140,9 +96,9 @@ func (r *Repository) GetVulnerabilitiesForWorkload(ctx context.Context, options 
 		return
 	}
 	for _, item := range reportList.Items {
-		containerName, containerNameSpecified := item.Labels[labelContainerName]
-		if item.Labels[labelWorkloadKind] == options.Kind &&
-			item.Labels[labelWorkloadName] == options.Name &&
+		containerName, containerNameSpecified := item.Labels[kube.LabelContainerName]
+		if item.Labels[kube.LabelResourceKind] == options.Kind &&
+			item.Labels[kube.LabelResourceName] == options.Name &&
 			containerNameSpecified {
 			reports = append(reports, ContainerImageScanReport{
 				Name:   fmt.Sprintf("Container %s", containerName),

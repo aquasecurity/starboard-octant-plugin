@@ -6,17 +6,34 @@ import (
 )
 
 var (
-	nodeGVK       = schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Node"}
-	podGVK        = schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Pod"}
-	deploymentGVK = schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"}
-	daemonSetGVK  = schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "DaemonSet"}
-	namespaceGVK  = schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Namespace"}
+	nodeGVK                  = schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Node"}
+	podGVK                   = schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Pod"}
+	deploymentGVK            = schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"}
+	daemonSetGVK             = schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "DaemonSet"}
+	statefulSetGVK           = schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "StatefulSet"}
+	replicaSetGVK            = schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "ReplicaSet"}
+	replicationControllerGVK = schema.GroupVersionKind{Group: "", Version: "v1", Kind: "ReplicationController"}
 )
 
 func GetCapabilities() *plugin.Capabilities {
 	return &plugin.Capabilities{
-		SupportsTab:           []schema.GroupVersionKind{podGVK, deploymentGVK, daemonSetGVK, namespaceGVK, nodeGVK},
-		SupportsPrinterConfig: []schema.GroupVersionKind{podGVK, deploymentGVK, daemonSetGVK},
-		IsModule:              true,
+		SupportsTab: []schema.GroupVersionKind{
+			podGVK,
+			deploymentGVK,
+			daemonSetGVK,
+			statefulSetGVK,
+			replicaSetGVK,
+			replicationControllerGVK,
+			nodeGVK,
+		},
+		SupportsPrinterConfig: []schema.GroupVersionKind{
+			podGVK,
+			deploymentGVK,
+			daemonSetGVK,
+			statefulSetGVK,
+			replicaSetGVK,
+			replicationControllerGVK,
+		},
+		IsModule: true,
 	}
 }

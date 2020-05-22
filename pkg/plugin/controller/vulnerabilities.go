@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 )
 
+// TODO Rename to more generic name; it's not only for vulnerabilities but other kinds of reports such as CIS Kubernetes Benchmarks
 // HandleVulnerabilitiesTab is called when Octant want to print the Vulnerabilities tab.
 func HandleVulnerabilitiesTab(request *service.PrintRequest) (tag plugin.TabResponse, err error) {
 	if request.Object == nil {
@@ -32,10 +33,13 @@ func HandleVulnerabilitiesTab(request *service.PrintRequest) (tag plugin.TabResp
 	}
 
 	switch kind {
-	case model.WorkloadKindPod, model.WorkloadKindDeployment, model.WorkloadKindDaemonSet:
+	case model.WorkloadKindPod,
+		model.WorkloadKindDeployment,
+		model.WorkloadKindDaemonSet,
+		model.StatefulSetKind,
+		model.ReplicaSetKind,
+		model.ReplicationControllerKind:
 		return handleVulnerabilitiesTabForWorkload(request, model.Workload{Kind: kind, Name: name})
-	case model.KindNamespace:
-		return handleVulnerabilitiesTabForNamespace(request, name)
 	case model.KindNode:
 		return handleCISBenchmarkTabForNode(request, name)
 	}
@@ -53,17 +57,6 @@ func handleVulnerabilitiesTabForWorkload(request *service.PrintRequest, workload
 	tab := component.NewTabWithContents(view.NewVulnerabilitiesReport(reports))
 	tabResponse = plugin.TabResponse{Tab: tab}
 
-	return
-}
-
-func handleVulnerabilitiesTabForNamespace(request *service.PrintRequest, namespace string) (tabResponse plugin.TabResponse, err error) {
-	repository := model.NewRepository(request.DashboardClient)
-	reports, err := repository.GetVulnerabilitiesForNamespace(request.Context(), namespace)
-	if err != nil {
-		return
-	}
-	tab := component.NewTabWithContents(view.NewVulnerabilitiesReport([]model.ContainerImageScanReport{reports}))
-	tabResponse = plugin.TabResponse{Tab: tab}
 	return
 }
 
