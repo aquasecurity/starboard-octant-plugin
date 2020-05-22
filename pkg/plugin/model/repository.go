@@ -23,6 +23,8 @@ const (
 	StatefulSetKind           = "StatefulSet"
 	ReplicaSetKind            = "ReplicaSet"
 	ReplicationControllerKind = "ReplicationController"
+	JobKind                   = "Job"
+	CronJobKind               = "CronJob"
 	KindNode                  = "Node"
 )
 

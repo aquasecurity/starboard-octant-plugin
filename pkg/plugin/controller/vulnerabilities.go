@@ -16,7 +16,7 @@ import (
 
 // TODO Rename to more generic name; it's not only for vulnerabilities but other kinds of reports such as CIS Kubernetes Benchmarks
 // HandleVulnerabilitiesTab is called when Octant want to print the Vulnerabilities tab.
-func HandleVulnerabilitiesTab(request *service.PrintRequest) (tag plugin.TabResponse, err error) {
+func HandleVulnerabilitiesTab(request *service.PrintRequest) (tab plugin.TabResponse, err error) {
 	if request.Object == nil {
 		err = errors.New("request object is nil")
 		return
@@ -38,7 +38,9 @@ func HandleVulnerabilitiesTab(request *service.PrintRequest) (tag plugin.TabResp
 		model.WorkloadKindDaemonSet,
 		model.StatefulSetKind,
 		model.ReplicaSetKind,
-		model.ReplicationControllerKind:
+		model.ReplicationControllerKind,
+		model.CronJobKind,
+		model.JobKind:
 		return handleVulnerabilitiesTabForWorkload(request, model.Workload{Kind: kind, Name: name})
 	case model.KindNode:
 		return handleCISBenchmarkTabForNode(request, name)
