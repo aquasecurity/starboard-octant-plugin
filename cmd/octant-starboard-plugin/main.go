@@ -9,6 +9,13 @@ import (
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 )
 
+var (
+	// Default wise GoReleaser sets three ldflags:
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
+
 func main() {
 	log.SetPrefix("")
 
@@ -19,7 +26,11 @@ func main() {
 
 func run(_ []string) (err error) {
 	name := settings.GetName()
-	description := settings.GetDescription()
+	description := settings.GetDescription(settings.BuildInfo{
+		Version: version,
+		Commit:  commit,
+		Date:    date,
+	})
 	capabilities := settings.GetCapabilities()
 	options := settings.GetOptions()
 	plugin, err := service.Register(name, description, capabilities, options...)
