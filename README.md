@@ -7,6 +7,8 @@
 > This is an [Octant][octant] plugin for [Starboard][starboard] which provides visibility into vulnerability assessment
 > reports for Kubernetes workloads stored as [custom security resources][starboard-crds].
 
+![Plugin demo](./docs/images/plugin-demo.gif)
+
 ## Table of Contents
 
 - [Installing](#installing)
@@ -30,7 +32,7 @@ pre-built binary releases.
 ### Prerequisites
 
 - Octant should first be installed. On macOS this is as simple as `brew install octant`. For installation instructions
-  on other platforms, see [Octant Installation][octant-installation].
+  on other other operating systems and package managers, see [Octant Installation][octant-installation].
 - Environment authenticated against your Kubernetes cluster
 
 > In the following instructions we assume that the `$HOME/.config/octant/plugins` directory is the default plugins
@@ -69,14 +71,14 @@ The `make deploy` goal copies the plugin binary to the `$HOME/.config/octant/plu
 If there's the `nginx` Deployment in the `dev` namespace:
 
 ```
-$ kubectl create deployment nginx --image=nginx:1.16 --namespace=dev
+$ kubectl create deployment nginx --image nginx:1.16 --namespace dev
 ```
 
 And you have already run the scanner to find its containers' images vulnerabilities. For example, with
 [Starboard CLI][starboard-cli], you could have run the following command:
 
 ```
-$ starboard find vulnerabilities -n dev deploy/nginx --namespace=dev
+$ starboard find vulnerabilities deploy/nginx --namespace dev
 ```
 
 You can now display the vulnerabilities reports in the Octant interface by following these steps:
@@ -92,15 +94,16 @@ You can now display the vulnerabilities reports in the Octant interface by follo
    resources for the `nginx` Deployment:
 
    ```
-   $ starbaord get vulnerabilities -n dev deploy/nginx -o yaml
+   $ kubectl get vulnerabilities.aquasecurity.github.io \
+     --selector starboard.resource.kind=Deployment,starboard.resource.name=nginx \
+     --namespace dev \
+     --output yaml
    ```
 
    or
 
    ```
-   $ kubectl get vulnerabilities.aquasecurity.github.io \
-     -l starboard.resource.kind=Deployment,starboard.resource.name=nginx \
-     -o yaml
+   $ starbaord get vulnerabilities deploy/nginx --namespace dev --output yaml
    ```
 
 Similar to displaying vulnerability reports for the specified Deployment, Starboard Octant plugin allows you to display
@@ -142,8 +145,8 @@ are associated with [Nodes][k8s-node]. To display the latest report for the spec
 
    ```
    $ kubectl get ciskubebenchreports.aquasecurity.github.io \
-     -l starboard.history.latest=true,starboard.resource.kind=Node,starboard.resource.name=minikube \
-     -o yaml
+     --selector starboard.history.latest=true,starboard.resource.kind=Node,starboard.resource.name=minikube \
+     --output yaml
    ```
 
 ## Displaying kube-hunter Reports
@@ -159,8 +162,8 @@ the latest kube-hunter report:
    
    ```
    $ kubectl get kubehuner.aquasecurity.github.io \
-     -l starboard.resource.kind=Cluster,starboard.resource.name=cluster \
-     -o yaml
+     --selector starboard.resource.kind=Cluster,starboard.resource.name=cluster \
+     --output yaml
    ```
 
 ## Uninstalling
@@ -184,11 +187,12 @@ This repository is available under the [Apache License 2.0][license].
 [build-action]: https://github.com/aquasecurity/octant-starboard-plugin/actions
 [license-img]: https://img.shields.io/github/license/aquasecurity/octant-starboard-plugin.svg
 [license]: https://github.com/aquasecurity/octant-starboard-plugin/blob/master/LICENSE
+
 [octant]: https://octant.dev/
 [octant-installation]: https://github.com/vmware-tanzu/octant#installation
+
 [starboard]: https://github.com/aquasecurity/starboard
 [starboard-crds]: https://github.com/aquasecurity/starboard#custom-security-resources-definitions
 [starboard-cli]: https://github.com/aquasecurity/starboard#starboard-cli
-[k8s-pod]: https://kubernetes.io/docs/concepts/workloads/pods/pod/
-[k8s-deployment]: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+
 [k8s-node]: https://kubernetes.io/docs/concepts/architecture/nodes/
