@@ -29,7 +29,8 @@ pre-built binary releases.
 
 ### Prerequisites
 
-- Octant should first be installed
+- Octant should first be installed. On macOS this is as simple as `brew install octant`. For installation instructions
+  on other platforms, see [Octant Installation][octant-installation].
 - Environment authenticated against your Kubernetes cluster
 
 > In the following instructions we assume that the `$HOME/.config/octant/plugins` directory is the default plugins
@@ -44,7 +45,8 @@ binary versions can be manually downloaded and installed.
 1. Download your [desired version][release]
 2. Unpack it (`tar -zxvf octant-starboard-plugin_darwin_x86_64.tar`)
 3. Find the `octant-starboard-plugin` binary in the unpacked directory, and move it to the default Octant's
-   configuration directory (`mv octant-starboard-plugin_darwin_x86_64/octant-starboard-plugin $HOME/.config/octant/plugins`). You might need to create the directory if it doesn't exist already. 
+   configuration directory (`mv octant-starboard-plugin_darwin_x86_64/octant-starboard-plugin $HOME/.config/octant/plugins`).
+   You might need to create the directory if it doesn't exist already.
 
 ### From Source (Linux, macOS)
 
@@ -70,11 +72,11 @@ If there's the `nginx` Deployment in the `dev` namespace:
 $ kubectl create deployment nginx --image=nginx:1.16 --namespace=dev
 ```
 
-And you have already run the scanner to find its containers' images vulnerabilities. For example, with Starboard CLI
-or `kubectl starboard` plugin, you could have run the following command:
+And you have already run the scanner to find its containers' images vulnerabilities. For example, with
+[Starboard CLI][starboard-cli], you could have run the following command:
 
 ```
-$ kubectl starboard find vulnerabilities -n dev deploy/nginx --namespace=dev
+$ starboard find vulnerabilities -n dev deploy/nginx --namespace=dev
 ```
 
 You can now display the vulnerabilities reports in the Octant interface by following these steps:
@@ -88,6 +90,12 @@ You can now display the vulnerabilities reports in the Octant interface by follo
 
    The data displayed in the **Vulnerabilities** tab is equivalent of getting the `vulnerabilities.aquasecurity.github.io`
    resources for the `nginx` Deployment:
+
+   ```
+   $ starbaord get vulnerabilities -n dev deploy/nginx -o yaml
+   ```
+
+   or
 
    ```
    $ kubectl get vulnerabilities.aquasecurity.github.io \
@@ -177,9 +185,10 @@ This repository is available under the [Apache License 2.0][license].
 [license-img]: https://img.shields.io/github/license/aquasecurity/octant-starboard-plugin.svg
 [license]: https://github.com/aquasecurity/octant-starboard-plugin/blob/master/LICENSE
 [octant]: https://octant.dev/
+[octant-installation]: https://github.com/vmware-tanzu/octant#installation
 [starboard]: https://github.com/aquasecurity/starboard
-[trivy]: https://github.com/aquasecurity/trivy
 [starboard-crds]: https://github.com/aquasecurity/starboard#custom-security-resources-definitions
+[starboard-cli]: https://github.com/aquasecurity/starboard#starboard-cli
 [k8s-pod]: https://kubernetes.io/docs/concepts/workloads/pods/pod/
 [k8s-deployment]: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
 [k8s-node]: https://kubernetes.io/docs/concepts/architecture/nodes/
