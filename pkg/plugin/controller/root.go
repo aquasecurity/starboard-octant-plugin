@@ -32,7 +32,7 @@ func buildRootViewForRequest(request service.Request) (*component.FlexLayout, er
 	flexLayout.AddSections(component.FlexLayoutSection{
 		{Width: component.WidthFull, View: component.NewMarkdownText(fmt.Sprintf("## Starboard"))},
 		{Width: component.WidthFull, View: component.NewMarkdownText(fmt.Sprintf("### Kube Hunter Report"))},
-		{Width: component.WidthFull, View: view.NewKubeHunterReport(report.Report)},
+		{Width: component.WidthFull, View: view.NewKubeHunterReport(report)},
 	})
 
 	return flexLayout, nil

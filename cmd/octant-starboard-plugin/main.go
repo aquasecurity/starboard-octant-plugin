@@ -26,7 +26,7 @@ func main() {
 
 func run(_ []string) (err error) {
 	name := settings.GetName()
-	description := settings.GetDescription(settings.BuildInfo{
+	description := settings.GetDescription(settings.VersionInfo{
 		Version: version,
 		Commit:  commit,
 		Date:    date,
