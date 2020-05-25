@@ -116,6 +116,35 @@ func (r *Repository) GetVulnerabilitiesForWorkload(ctx context.Context, options 
 	return
 }
 
+func (r *Repository) GetConfigAudit(ctx context.Context, options Workload) (ca *security.ConfigAuditReport, err error) {
+	unstructuredList, err := r.client.List(ctx, store.Key{
+		APIVersion: aquaSecurityAPIVersion,
+		Kind:       security.ConfigAuditReportKind,
+	})
+	if err != nil {
+		err = fmt.Errorf("listing config audit reports: %w", err)
+		return
+	}
+	if len(unstructuredList.Items) == 0 {
+		return
+	}
+	var reportList security.ConfigAuditReportList
+	err = r.structure(unstructuredList, &reportList)
+	if err != nil {
+		err = fmt.Errorf("unmarshalling JSON to ConfigAuditReportList: %w", err)
+		return
+	}
+
+	for _, item := range reportList.Items {
+		if item.Labels[kube.LabelResourceKind] == options.Kind &&
+			item.Labels[kube.LabelResourceName] == options.Name {
+			ca = &item
+			return
+		}
+	}
+	return
+}
+
 func (r *Repository) GetCISKubeBenchReport(ctx context.Context, node string) (report *security.CISKubeBenchReport, err error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
 		APIVersion: aquaSecurityAPIVersion,

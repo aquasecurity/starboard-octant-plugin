@@ -12,7 +12,7 @@ const (
 	rootNavIcon = "boat"
 )
 
-type BuildInfo struct {
+type VersionInfo struct {
 	Version string
 	Commit  string
 	Date    string
@@ -22,6 +22,6 @@ func GetName() string {
 	return name
 }
 
-func GetDescription(info BuildInfo) string {
-	return fmt.Sprintf("%s (%s, %s, %s)", description, info.Version, info.Commit, info.Date)
+func GetDescription(version VersionInfo) string {
+	return fmt.Sprintf("%s (%s, %s, %s)", description, version.Version, version.Commit, version.Date)
 }

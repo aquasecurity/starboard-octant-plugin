@@ -100,6 +100,14 @@ func HandlePrinterConfig(request *service.PrintRequest) (plugin.PrintResponse, e
 		return plugin.PrintResponse{}, err
 	}
 
+	configAudit, err := repository.GetConfigAudit(request.Context(), model.Workload{
+		Kind: kind,
+		Name: name,
+	})
+	if err != nil {
+		return plugin.PrintResponse{}, err
+	}
+
 	// When printing an object, you can create multiple types of content. In this
 	// example, the plugin is:
 	//
@@ -109,6 +117,12 @@ func HandlePrinterConfig(request *service.PrintRequest) (plugin.PrintResponse, e
 	//   summary section for the component.
 	return plugin.PrintResponse{
 		Status: summarySectionsFor(summary),
+		Items: []component.FlexLayoutItem{
+			{
+				Width: component.WidthFull,
+				View:  view.NewPolarisReport(configAudit),
+			},
+		},
 	}, nil
 }
 

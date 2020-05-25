@@ -5,21 +5,21 @@ import (
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 )
 
-func NewKubeHunterReport(report sec.KubeHunterOutput) (flexLayout *component.FlexLayout) {
+func NewKubeHunterReport(report sec.KubeHunterReport) (flexLayout *component.FlexLayout) {
 	flexLayout = component.NewFlexLayout("Kube Hunter Report")
 
 	flexLayout.AddSections(component.FlexLayoutSection{
 		{
 			Width: component.WidthThird,
-			View:  NewReportSummary(report.GeneratedAt.Time),
+			View:  NewReportSummary(report.CreationTimestamp.Time),
 		},
 		{
 			Width: component.WidthThird,
-			View:  NewScannerSummary(report.Scanner),
+			View:  NewScannerSummary(report.Report.Scanner),
 		},
 		{
 			Width: component.WidthFull,
-			View:  createTable(report),
+			View:  createTable(report.Report),
 		},
 	})
 	return

@@ -22,7 +22,7 @@ func NewCISKubeBenchReport(benchmark *starboard.CISKubeBenchReport) (flexLayout 
 	uiSections = append([]component.FlexLayoutItem{
 		{
 			Width: component.WidthThird,
-			View:  NewReportSummary(benchmark.Report.GeneratedAt.Time),
+			View:  NewReportSummary(benchmark.CreationTimestamp.Time),
 		},
 		{
 			Width: component.WidthThird,

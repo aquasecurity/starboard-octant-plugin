@@ -16,7 +16,7 @@ func NewVulnerabilitiesReport(reports []model.ContainerImageScanReport) (flexLay
 	for _, containerReport := range reports {
 		items = append(items, component.FlexLayoutItem{
 			Width: component.WidthThird,
-			View:  NewReportSummary(containerReport.Report.Report.GeneratedAt.Time),
+			View:  NewReportSummary(containerReport.Report.CreationTimestamp.Time),
 		})
 
 		items = append(items, component.FlexLayoutItem{
