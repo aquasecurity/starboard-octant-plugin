@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/aquasecurity/octant-starboard-plugin/pkg/plugin/settings"
+	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/settings"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 )
 

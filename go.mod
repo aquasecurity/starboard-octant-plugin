@@ -1,4 +1,4 @@
-module github.com/aquasecurity/octant-starboard-plugin
+module github.com/aquasecurity/starboard-octant-plugin
 
 go 1.14
 

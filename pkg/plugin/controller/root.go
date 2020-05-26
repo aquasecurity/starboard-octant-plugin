@@ -3,9 +3,9 @@ package controller
 import (
 	"fmt"
 
-	"github.com/aquasecurity/octant-starboard-plugin/pkg/plugin/model"
+	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/model"
 
-	"github.com/aquasecurity/octant-starboard-plugin/pkg/plugin/view"
+	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 )

@@ -3,12 +3,12 @@ OCTANT_PLUGINS_DIR = ~/.config/octant/plugins
 
 .PHONY: build
 build:
-	go build -mod=vendor -o bin/octant-starboard-plugin cmd/octant-starboard-plugin/main.go
+	go build -mod=vendor -o bin/starboard-octant-plugin cmd/starboard-octant-plugin/main.go
 
 deploy: build
 	mkdir -p $(OCTANT_PLUGINS_DIR)
-	cp -vi bin/octant-starboard-plugin $(OCTANT_PLUGINS_DIR)
+	cp -vi bin/starboard-octant-plugin $(OCTANT_PLUGINS_DIR)
 
 .PHONY: uninstall
 uninstall:
-	rm -i $(OCTANT_PLUGINS_DIR)/octant-starboard-plugin
+	rm -i $(OCTANT_PLUGINS_DIR)/starboard-octant-plugin
