@@ -1,9 +1,9 @@
 env:
   - GO111MODULE=on
 builds:
-  - id: octant-starboard-plugin
-    main: ./cmd/octant-starboard-plugin/main.go
-    binary: octant-starboard-plugin
+  - id: starboard-octant-plugin
+    main: ./cmd/starboard-octant-plugin/main.go
+    binary: starboard-octant-plugin
     flags:
       - -mod=vendor
     env:
