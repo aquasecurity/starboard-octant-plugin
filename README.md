@@ -80,6 +80,10 @@ Run the scanner to find the vulnerabilities:
 $ starboard find vulnerabilities deploy/nginx --namespace dev
 ```
 
+> In the example above we are using the Starboard CLI to populate the vulnerability information. However, another option
+> might be an operator which populates the Starboard CRDs. No matter how the CRDs are created, they are visible within
+> Octant.
+
 You can now display the vulnerabilities reports in the Octant interface by following these steps:
 
 1. Run `octant` and select the `dev` namespace.
