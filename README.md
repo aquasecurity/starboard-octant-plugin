@@ -94,16 +94,16 @@ You can now display the vulnerabilities reports in the Octant interface by follo
    resources for the `nginx` Deployment:
 
    ```
-   $ kubectl get vulnerabilities.aquasecurity.github.io \
-     --selector starboard.resource.kind=Deployment,starboard.resource.name=nginx \
-     --namespace dev \
-     --output yaml
+   $ starbaord get vulnerabilities deploy/nginx --namespace dev --output yaml
    ```
 
    or
 
    ```
-   $ starbaord get vulnerabilities deploy/nginx --namespace dev --output yaml
+   $ kubectl get vulnerabilities.aquasecurity.github.io \
+     --selector starboard.resource.kind=Deployment,starboard.resource.name=nginx \
+     --namespace dev \
+     --output yaml
    ```
 
 Similar to displaying vulnerability reports for the specified Deployment, Starboard Octant plugin allows you to display
@@ -127,7 +127,15 @@ To display the summary of vulnerabilities for the specified workload:
 
 ### Displaying Kubernetes Configuration Audit Reports
 
-> TODO: Explain how to display `configauditrepots.aquasecurity.github.io` resources.
+To display a configuration audit report for the specified workload, which is represented as an instance of the
+`configauditreports.aquasecurity.github.io` resource:
+
+1. Expand **Workloads** and select desired workload.
+2. Click the link with the workload's name to display the details.
+
+   ![](./docs/images/deployment_configauditreports.png)
+
+   The report is shown under the **Config Audit Report** heading.
 
 ### Displaying CIS Kubernetes Benchmark Reports
 
