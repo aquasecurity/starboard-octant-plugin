@@ -1,4 +1,4 @@
-# Octant Starboard Plugin
+# Starboard Octant Plugin
 
 [![GitHub Release][release-img]][release]
 [![Build Actions][build-action-img]][build-action]
@@ -26,13 +26,13 @@
 
 ## Installing
 
-This guide shows how to install the Octant Starboard plugin. The plugin can be installed either from source, or from
+This guide shows how to install the Starboard Octant plugin. The plugin can be installed either from source, or from
 pre-built binary releases.
 
 ### Prerequisites
 
 - Octant should first be installed. On macOS this is as simple as `brew install octant`. For installation instructions
-  on other other operating systems and package managers, see [Octant Installation][octant-installation].
+  on other operating systems and package managers, see [Octant Installation][octant-installation].
 - Environment authenticated against your Kubernetes cluster
 
 > In the following instructions we assume that the `$HOME/.config/octant/plugins` directory is the default plugins
@@ -41,13 +41,13 @@ pre-built binary releases.
 
 ### From the Binary Releases
 
-Every [release][release] of Octant Starboard plugin provides binary releases for a variety of operating systems. These
+Every [release][release] of Starboard Octant plugin provides binary releases for a variety of operating systems. These
 binary versions can be manually downloaded and installed.
 
 1. Download your [desired version][release]
-2. Unpack it (`tar -zxvf octant-starboard-plugin_darwin_x86_64.tar`)
-3. Find the `octant-starboard-plugin` binary in the unpacked directory, and move it to the default Octant's
-   configuration directory (`mv octant-starboard-plugin_darwin_x86_64/octant-starboard-plugin $HOME/.config/octant/plugins`).
+2. Unpack it (`tar -zxvf starboard-octant-plugin_darwin_x86_64.tar`)
+3. Find the `starboard-octant-plugin` binary in the unpacked directory, and move it to the default Octant's
+   configuration directory (`mv starboard-octant-plugin_darwin_x86_64/starboard-octant-plugin $HOME/.config/octant/plugins`).
    You might need to create the directory if it doesn't exist already.
 
 ### From Source (Linux, macOS)
@@ -58,8 +58,8 @@ version of the plugin.
 You must have a working Go environment.
 
 ```
-$ git clone git clone git@github.com:aquasecurity/octant-starboard-plugin.git
-$ cd octant-starboard-plugin
+$ git clone git clone git@github.com:aquasecurity/starboard-octant-plugin.git
+$ cd starboard-octant-plugin
 $ export GOPRIVATE=github.com/aquasecurity/starboard
 $ make deploy
 ```
@@ -171,7 +171,7 @@ the latest kube-hunter report:
 Run the following command to remove the plugin:
 
 ```
-rm -f $OCTANT_PLUGIN_PATH/octant-starboard-plugin
+rm -f $OCTANT_PLUGIN_PATH/starboard-octant-plugin
 ```
 
 where `$OCTANT_PLUGIN_PATH` is the default plugins location respected by Octant. If not set, it defaults to the
@@ -181,12 +181,12 @@ where `$OCTANT_PLUGIN_PATH` is the default plugins location respected by Octant.
 
 This repository is available under the [Apache License 2.0][license].
 
-[release-img]: https://img.shields.io/github/release/aquasecurity/octant-starboard-plugin.svg
-[release]: https://github.com/aquasecurity/octant-starboard-plugin/releases
-[build-action-img]: https://github.com/aquasecurity/octant-starboard-plugin/workflows/build/badge.svg
-[build-action]: https://github.com/aquasecurity/octant-starboard-plugin/actions
-[license-img]: https://img.shields.io/github/license/aquasecurity/octant-starboard-plugin.svg
-[license]: https://github.com/aquasecurity/octant-starboard-plugin/blob/master/LICENSE
+[release-img]: https://img.shields.io/github/release/aquasecurity/starboard-octant-plugin.svg
+[release]: https://github.com/aquasecurity/starboard-octant-plugin/releases
+[build-action-img]: https://github.com/aquasecurity/starboard-octant-plugin/workflows/build/badge.svg
+[build-action]: https://github.com/aquasecurity/starboard-octant-plugin/actions
+[license-img]: https://img.shields.io/github/license/aquasecurity/starboard-octant-plugin.svg
+[license]: https://github.com/aquasecurity/starboard-octant-plugin/blob/master/LICENSE
 
 [octant]: https://octant.dev/
 [octant-installation]: https://github.com/vmware-tanzu/octant#installation
