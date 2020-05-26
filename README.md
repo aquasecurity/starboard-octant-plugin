@@ -68,14 +68,13 @@ The `make deploy` goal copies the plugin binary to the `$HOME/.config/octant/plu
 
 ## Getting Started
 
-If there's the `nginx` Deployment in the `dev` namespace:
+As an example let's run an old version of `nginx` that we know has vulnerabilities. Create an `nginx` Deployment in the `dev` namespace:
 
 ```
 $ kubectl create deployment nginx --image nginx:1.16 --namespace dev
 ```
 
-And you have already run the scanner to find its containers' images vulnerabilities. For example, with
-[Starboard CLI][starboard-cli], you could have run the following command:
+Run the scanner to find the vulnerabilities:
 
 ```
 $ starboard find vulnerabilities deploy/nginx --namespace dev
@@ -94,7 +93,7 @@ You can now display the vulnerabilities reports in the Octant interface by follo
    resources for the `nginx` Deployment:
 
    ```
-   $ starbaord get vulnerabilities deploy/nginx --namespace dev --output yaml
+   $ starboard get vulnerabilities deploy/nginx --namespace dev --output yaml
    ```
 
    or
