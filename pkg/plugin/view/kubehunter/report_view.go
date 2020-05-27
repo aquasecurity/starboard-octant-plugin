@@ -18,7 +18,7 @@ func NewReport(report *starboard.KubeHunterReport) (flexLayout *component.FlexLa
 					"> Note that [kube-hunter] reports are represented by instances of the `kubehunterreports.aquasecurity.github.io` resource.\n" +
 					"> You can create such a report by running [kube-hunter] with [Starboard CLI][starboard-cli]:\n" +
 					"> ```\n" +
-					"> $ starboard kube-hunter --v 3\n" +
+					"> $ starboard kube-hunter\n" +
 					"> ```\n" +
 					"\n" +
 					"[kube-hunter]: https://github.com/aquasecurity/kube-hunter\n" +
