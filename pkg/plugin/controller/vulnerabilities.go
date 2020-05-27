@@ -4,6 +4,8 @@ import (
 	"errors"
 	"strconv"
 
+	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view/kubebench"
+
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/model"
 
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view"
@@ -69,7 +71,7 @@ func handleCISBenchmarkTabForNode(request *service.PrintRequest, node string) (t
 		return
 	}
 
-	tab := component.NewTabWithContents(view.NewCISKubeBenchReport(report))
+	tab := component.NewTabWithContents(kubebench.NewReport(report))
 	tabResponse = plugin.TabResponse{Tab: tab}
 	return
 }

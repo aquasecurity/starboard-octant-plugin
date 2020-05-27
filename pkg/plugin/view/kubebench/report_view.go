@@ -1,15 +1,37 @@
-package view
+package kubebench
 
 import (
 	"fmt"
 	"strconv"
 
+	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view"
+
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 )
 
-func NewCISKubeBenchReport(benchmark *starboard.CISKubeBenchReport) (flexLayout component.FlexLayout) {
+// NewReport creates a new view component for displaying the specified CISKubeBenchReport.
+func NewReport(benchmark *starboard.CISKubeBenchReport) (flexLayout component.FlexLayout) {
 	flexLayout = *component.NewFlexLayout("CIS Kubernetes Benchmark")
+
+	if benchmark == nil {
+		flexLayout.AddSections(component.FlexLayoutSection{
+			{
+				Width: component.WidthFull,
+				View: component.NewMarkdownText("This report is not available.\n" +
+					"> Note that [kube-bench] reports are represented by instances of the `ciskubebenchreports.aquasecurity.github.io` resource.\n" +
+					"> You can create such a report by running [kube-bench] with [Starboard CLI][starboard-cli]:\n" +
+					"> ```\n" +
+					"> $ starboard kube-bench\n" +
+					"> ```\n" +
+					"\n" +
+					"[kube-bench]: https://github.com/aquasecurity/kube-bench\n" +
+					"[starboard-cli]: https://github.com/aquasecurity/starboard#starboard-cli"),
+			},
+		})
+		return
+	}
+
 	uiSections := make([]component.FlexLayoutItem, len(benchmark.Report.Sections))
 
 	for i, section := range benchmark.Report.Sections {
@@ -22,11 +44,11 @@ func NewCISKubeBenchReport(benchmark *starboard.CISKubeBenchReport) (flexLayout 
 	uiSections = append([]component.FlexLayoutItem{
 		{
 			Width: component.WidthThird,
-			View:  NewReportSummary(benchmark.CreationTimestamp.Time),
+			View:  view.NewReportSummary(benchmark.CreationTimestamp.Time),
 		},
 		{
 			Width: component.WidthThird,
-			View:  NewScannerSummary(benchmark.Report.Scanner),
+			View:  view.NewScannerSummary(benchmark.Report.Scanner),
 		},
 		{
 			Width: component.WidthThird,
