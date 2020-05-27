@@ -2,10 +2,10 @@ package controller
 
 import (
 	"fmt"
+	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view/kubehunter"
 
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/model"
 
-	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 )
@@ -32,7 +32,7 @@ func buildRootViewForRequest(request service.Request) (*component.FlexLayout, er
 	flexLayout.AddSections(component.FlexLayoutSection{
 		{Width: component.WidthFull, View: component.NewMarkdownText(fmt.Sprintf("## Starboard"))},
 		{Width: component.WidthFull, View: component.NewMarkdownText(fmt.Sprintf("### Kube Hunter Report"))},
-		{Width: component.WidthFull, View: view.NewKubeHunterReport(report)},
+		{Width: component.WidthFull, View: kubehunter.NewReport(report)},
 	})
 
 	return flexLayout, nil

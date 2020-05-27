@@ -174,7 +174,7 @@ func (r *Repository) GetCISKubeBenchReport(ctx context.Context, node string) (re
 	return
 }
 
-func (r *Repository) GetKubeHunterReport(ctx context.Context) (report security.KubeHunterReport, err error) {
+func (r *Repository) GetKubeHunterReport(ctx context.Context) (report *security.KubeHunterReport, err error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
 		APIVersion: aquaSecurityAPIVersion,
 		Kind:       security.KubeHunterReportKind,
@@ -189,8 +189,9 @@ func (r *Repository) GetKubeHunterReport(ctx context.Context) (report security.K
 	}
 
 	for _, r := range reportList.Items {
+		// TODO We should be using label selectors here, but unfortunately Octant does ignore them (follow up with the Octant team)
 		if r.Name == "cluster" {
-			report = r
+			report = r.DeepCopy()
 			return
 		}
 	}
