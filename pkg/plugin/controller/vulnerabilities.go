@@ -2,6 +2,7 @@ package controller
 
 import (
 	"errors"
+	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view/vulnerabilities"
 	"strconv"
 
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view/kubebench"
@@ -33,6 +34,10 @@ func HandleVulnerabilitiesTab(request *service.PrintRequest) (tab plugin.TabResp
 	if err != nil {
 		return
 	}
+	namespace, err := accessor.Namespace(request.Object)
+	if err != nil {
+		return
+	}
 
 	switch kind {
 	case model.WorkloadKindPod,
@@ -43,7 +48,7 @@ func HandleVulnerabilitiesTab(request *service.PrintRequest) (tab plugin.TabResp
 		model.ReplicationControllerKind,
 		model.CronJobKind,
 		model.JobKind:
-		return handleVulnerabilitiesTabForWorkload(request, model.Workload{Kind: kind, Name: name})
+		return handleVulnerabilitiesTabForWorkload(request, model.Workload{Kind: kind, Name: name, Namespace: namespace})
 	case model.KindNode:
 		return handleCISBenchmarkTabForNode(request, name)
 	}
@@ -58,7 +63,7 @@ func handleVulnerabilitiesTabForWorkload(request *service.PrintRequest, workload
 		return
 	}
 
-	tab := component.NewTabWithContents(view.NewVulnerabilitiesReport(reports))
+	tab := component.NewTabWithContents(vulnerabilities.NewReport(workload, reports))
 	tabResponse = plugin.TabResponse{Tab: tab}
 
 	return
