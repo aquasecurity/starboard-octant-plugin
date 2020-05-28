@@ -1,8 +1,10 @@
-package view
+package vulnerabilities
 
 import (
 	"fmt"
+	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view"
 	"strconv"
+	"strings"
 
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/model"
 
@@ -10,18 +12,42 @@ import (
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 )
 
-func NewVulnerabilitiesReport(reports []model.ContainerImageScanReport) (flexLayout component.FlexLayout) {
+// NewReport creates a new view component for displaying the specified ContainerImageScanReport.
+func NewReport(workload model.Workload, reports []model.ContainerImageScanReport) (flexLayout component.FlexLayout) {
 	flexLayout = *component.NewFlexLayout("Vulnerabilities")
+	if len(reports) == 0 {
+		flexLayout.AddSections(component.FlexLayoutSection{
+			{
+				Width: component.WidthFull,
+				View: component.NewMarkdownText(fmt.Sprintf(
+					"These reports are not available.\n"+
+						"> Note that vulnerability reports are represented by instances of the `vulnerabilities.aquasecurity.github.io` resource.\n"+
+						"> You can create such reports by running [Trivy][trivy] with [Starboard CLI][starboard-cli]:\n"+
+						"> ```\n"+
+						"> $ starboard find vulnerabilities %[1]s/%[2]s --namespace %[3]s\n"+
+						"> ```\n"+
+						"\n"+
+						"[trivy]: https://github.com/aquasecurity/trivy\n"+
+						"[starboard-cli]: https://github.com/aquasecurity/starboard#starboard-cli",
+					strings.ToLower(workload.Kind),
+					workload.Name,
+					workload.Namespace,
+				)),
+			},
+		})
+		return
+	}
+
 	var items []component.FlexLayoutItem
 	for _, containerReport := range reports {
 		items = append(items, component.FlexLayoutItem{
 			Width: component.WidthThird,
-			View:  NewReportSummary(containerReport.Report.CreationTimestamp.Time),
+			View:  view.NewReportSummary(containerReport.Report.CreationTimestamp.Time),
 		})
 
 		items = append(items, component.FlexLayoutItem{
 			Width: component.WidthThird,
-			View:  NewScannerSummary(containerReport.Report.Report.Scanner),
+			View:  view.NewScannerSummary(containerReport.Report.Report.Scanner),
 		})
 
 		items = append(items, component.FlexLayoutItem{

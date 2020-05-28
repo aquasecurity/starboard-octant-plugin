@@ -34,8 +34,9 @@ const (
 )
 
 type Workload struct {
-	Kind string
-	Name string
+	Kind      string
+	Name      string
+	Namespace string
 }
 
 type Repository struct {
