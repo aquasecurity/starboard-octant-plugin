@@ -2,13 +2,14 @@ package vulnerabilities
 
 import (
 	"fmt"
-	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view"
 	"strconv"
 	"strings"
 
+	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view"
+
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/model"
 
-	sec "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 )
 
@@ -21,14 +22,15 @@ func NewReport(workload model.Workload, reports []model.ContainerImageScanReport
 				Width: component.WidthFull,
 				View: component.NewMarkdownText(fmt.Sprintf(
 					"These reports are not available.\n"+
-						"> Note that vulnerability reports are represented by instances of the `vulnerabilities.aquasecurity.github.io` resource.\n"+
+						"> Note that vulnerability reports are represented by instances of the `%[1]s` resource.\n"+
 						"> You can create such reports by running [Trivy][trivy] with [Starboard CLI][starboard-cli]:\n"+
 						"> ```\n"+
-						"> $ starboard find vulnerabilities %[1]s/%[2]s --namespace %[3]s\n"+
+						"> $ starboard find vulnerabilities %[2]s/%[3]s --namespace %[4]s\n"+
 						"> ```\n"+
 						"\n"+
 						"[trivy]: https://github.com/aquasecurity/trivy\n"+
 						"[starboard-cli]: https://github.com/aquasecurity/starboard#starboard-cli",
+					starboard.VulnerabilitiesCRName,
 					strings.ToLower(workload.Kind),
 					workload.Name,
 					workload.Namespace,
@@ -66,7 +68,7 @@ func NewReport(workload model.Workload, reports []model.ContainerImageScanReport
 	return flexLayout
 }
 
-func createVulnerabilitiesTable(containerName string, report sec.Vulnerability) component.Component {
+func createVulnerabilitiesTable(containerName string, report starboard.Vulnerability) component.Component {
 	table := component.NewTableWithRows(
 		containerName, "There are no vulnerabilities!",
 		component.NewTableCols("ID", "Severity", "Title", "Resource", "Installed Version", "Fixed Version"),
@@ -87,14 +89,14 @@ func createVulnerabilitiesTable(containerName string, report sec.Vulnerability) 
 	return table
 }
 
-func getLinkComponent(v sec.VulnerabilityItem) component.Component {
+func getLinkComponent(v starboard.VulnerabilityItem) component.Component {
 	if len(v.Links) > 0 {
 		return component.NewLink(v.VulnerabilityID, v.VulnerabilityID, v.Links[0])
 	}
 	return component.NewText(v.VulnerabilityID)
 }
 
-func NewVulnerabilitiesSummary(title string, summary sec.VulnerabilitySummary) (c *component.Summary) {
+func NewVulnerabilitiesSummary(title string, summary starboard.VulnerabilitySummary) (c *component.Summary) {
 	c = component.NewSummary(title)
 
 	sections := []component.SummarySection{

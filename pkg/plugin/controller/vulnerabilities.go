@@ -2,15 +2,13 @@ package controller
 
 import (
 	"errors"
-	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view/vulnerabilities"
-	"strconv"
 
+	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view/configaudit"
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view/kubebench"
+	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view/vulnerabilities"
 
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/model"
 
-	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view"
-	security "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/plugin"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
@@ -82,9 +80,10 @@ func handleCISBenchmarkTabForNode(request *service.PrintRequest, node string) (t
 }
 
 // handlePrinterConfig is called when Octant wants to print an object.
-func HandlePrinterConfig(request *service.PrintRequest) (plugin.PrintResponse, error) {
+func HandlePrinterConfig(request *service.PrintRequest) (response plugin.PrintResponse, err error) {
 	if request.Object == nil {
-		return plugin.PrintResponse{}, errors.New("object is nil")
+		err = errors.New("object is nil")
+		return
 	}
 
 	repository := model.NewRepository(request.DashboardClient)
@@ -92,11 +91,11 @@ func HandlePrinterConfig(request *service.PrintRequest) (plugin.PrintResponse, e
 	accessor := meta.NewAccessor()
 	kind, err := accessor.Kind(request.Object)
 	if err != nil {
-		return plugin.PrintResponse{}, err
+		return
 	}
 	name, err := accessor.Name(request.Object)
 	if err != nil {
-		return plugin.PrintResponse{}, err
+		return
 	}
 
 	summary, err := repository.GetVulnerabilitiesSummary(request.Context(), model.Workload{
@@ -104,7 +103,7 @@ func HandlePrinterConfig(request *service.PrintRequest) (plugin.PrintResponse, e
 		Name: name,
 	})
 	if err != nil {
-		return plugin.PrintResponse{}, err
+		return
 	}
 
 	configAudit, err := repository.GetConfigAudit(request.Context(), model.Workload{
@@ -112,33 +111,17 @@ func HandlePrinterConfig(request *service.PrintRequest) (plugin.PrintResponse, e
 		Name: name,
 	})
 	if err != nil {
-		return plugin.PrintResponse{}, err
+		return
 	}
 
-	// When printing an object, you can create multiple types of content. In this
-	// example, the plugin is:
-	//
-	// * adding a field to the configuration section for this object.
-	// * adding a field to the status section for this object.
-	// * create a new piece of content that will be embedded in the
-	//   summary section for the component.
-	return plugin.PrintResponse{
-		Status: summarySectionsFor(summary),
+	response = plugin.PrintResponse{
+		Status: vulnerabilities.NewSummarySections(summary),
 		Items: []component.FlexLayoutItem{
 			{
 				Width: component.WidthFull,
-				View:  view.NewPolarisReport(configAudit),
+				View:  configaudit.NewReport(configAudit),
 			},
 		},
-	}, nil
-}
-
-func summarySectionsFor(summary security.VulnerabilitySummary) []component.SummarySection {
-	return []component.SummarySection{
-		{Header: "Critical Vulnerabilities", Content: component.NewText(strconv.Itoa(summary.CriticalCount))},
-		{Header: "High Vulnerabilities", Content: component.NewText(strconv.Itoa(summary.HighCount))},
-		{Header: "Medium Vulnerabilities", Content: component.NewText(strconv.Itoa(summary.MediumCount))},
-		{Header: "Low Vulnerabilities", Content: component.NewText(strconv.Itoa(summary.LowCount))},
-		{Header: "Unknown Vulnerabilities", Content: component.NewText(strconv.Itoa(summary.UnknownCount))},
 	}
+	return
 }

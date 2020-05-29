@@ -27,6 +27,7 @@ func NewScannerSummary(scanner sec.Scanner) (c *component.Summary) {
 	return
 }
 
+// TODO Accept ObjectMeta to display other info such as labels
 func NewReportSummary(generatedAt time.Time) (c *component.Summary) {
 	c = component.NewSummary("Report Metadata")
 	sections := []component.SummarySection{
