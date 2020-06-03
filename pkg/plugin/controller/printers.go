@@ -15,9 +15,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 )
 
-// TODO Rename to more generic name; it's not only for vulnerabilities but other kinds of reports such as CIS Kubernetes Benchmarks
-// HandleVulnerabilitiesTab is called when Octant want to print the Vulnerabilities tab.
-func HandleVulnerabilitiesTab(request *service.PrintRequest) (tab plugin.TabResponse, err error) {
+// ResourceTabPrinter is called when Octant wants to add new tab for the underlying resource.
+func ResourceTabPrinter(request *service.PrintRequest) (tab plugin.TabResponse, err error) {
 	if request.Object == nil {
 		err = errors.New("request object is nil")
 		return
@@ -46,15 +45,15 @@ func HandleVulnerabilitiesTab(request *service.PrintRequest) (tab plugin.TabResp
 		model.ReplicationControllerKind,
 		model.CronJobKind,
 		model.JobKind:
-		return handleVulnerabilitiesTabForWorkload(request, model.Workload{Kind: kind, Name: name, Namespace: namespace})
+		return vulnerabilitiesTabPrinter(request, model.Workload{Kind: kind, Name: name, Namespace: namespace})
 	case model.KindNode:
-		return handleCISBenchmarkTabForNode(request, name)
+		return cisKubernetesBenchmarksTabPrinter(request, name)
 	}
 
 	return
 }
 
-func handleVulnerabilitiesTabForWorkload(request *service.PrintRequest, workload model.Workload) (tabResponse plugin.TabResponse, err error) {
+func vulnerabilitiesTabPrinter(request *service.PrintRequest, workload model.Workload) (tabResponse plugin.TabResponse, err error) {
 	repository := model.NewRepository(request.DashboardClient)
 	reports, err := repository.GetVulnerabilitiesForWorkload(request.Context(), workload)
 	if err != nil {
@@ -67,7 +66,7 @@ func handleVulnerabilitiesTabForWorkload(request *service.PrintRequest, workload
 	return
 }
 
-func handleCISBenchmarkTabForNode(request *service.PrintRequest, node string) (tabResponse plugin.TabResponse, err error) {
+func cisKubernetesBenchmarksTabPrinter(request *service.PrintRequest, node string) (tabResponse plugin.TabResponse, err error) {
 	repository := model.NewRepository(request.DashboardClient)
 	report, err := repository.GetCISKubeBenchReport(request.Context(), node)
 	if err != nil {
@@ -79,8 +78,8 @@ func handleCISBenchmarkTabForNode(request *service.PrintRequest, node string) (t
 	return
 }
 
-// handlePrinterConfig is called when Octant wants to print an object.
-func HandlePrinterConfig(request *service.PrintRequest) (response plugin.PrintResponse, err error) {
+// ResourcePrinter is called when Octant wants to print the details of the underlying resource.
+func ResourcePrinter(request *service.PrintRequest) (response plugin.PrintResponse, err error) {
 	if request.Object == nil {
 		err = errors.New("object is nil")
 		return

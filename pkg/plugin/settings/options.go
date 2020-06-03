@@ -10,8 +10,8 @@ import (
 
 func GetOptions() []service.PluginOption {
 	return []service.PluginOption{
-		service.WithTabPrinter(controller.HandleVulnerabilitiesTab),
-		service.WithPrinter(controller.HandlePrinterConfig),
+		service.WithTabPrinter(controller.ResourceTabPrinter),
+		service.WithPrinter(controller.ResourcePrinter),
 		service.WithNavigation(
 			func(_ *service.NavigationRequest) (nav navigation.Navigation, err error) {
 				nav = navigation.Navigation{
