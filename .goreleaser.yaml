@@ -4,8 +4,6 @@ builds:
   - id: starboard-octant-plugin
     main: ./cmd/starboard-octant-plugin/main.go
     binary: starboard-octant-plugin
-    flags:
-      - -mod=vendor
     env:
       - CGO_ENABLED=0
     goos:
