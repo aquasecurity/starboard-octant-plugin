@@ -7,11 +7,14 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity"
+	"k8s.io/apimachinery/pkg/labels"
+
 	"github.com/aquasecurity/starboard/pkg/kube"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	security "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 	"github.com/vmware-tanzu/octant/pkg/store"
 )
@@ -26,13 +29,10 @@ const (
 	JobKind                   = "Job"
 	CronJobKind               = "CronJob"
 	KindNode                  = "Node"
+	ClusterKind               = "Cluster"
 )
 
-const (
-	aquaSecurityAPIVersion = "aquasecurity.github.io/v1alpha1"
-	vulnerabilitiesKind    = "Vulnerability"
-)
-
+// Deprecated use structure defined by Starboard model to represent Kubernetes-native resources including workloads.
 type Workload struct {
 	Kind      string
 	Name      string
@@ -51,10 +51,10 @@ func NewRepository(client service.Dashboard) *Repository {
 
 type ContainerImageScanReport struct {
 	Name   string
-	Report security.Vulnerability
+	Report starboard.Vulnerability
 }
 
-func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options Workload) (vs security.VulnerabilitySummary, err error) {
+func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options Workload) (vs starboard.VulnerabilitySummary, err error) {
 	containerReports, err := r.GetVulnerabilitiesForWorkload(ctx, options)
 	if err != nil {
 		return vs, err
@@ -62,13 +62,13 @@ func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options Work
 	for _, cr := range containerReports {
 		for _, v := range cr.Report.Report.Vulnerabilities {
 			switch v.Severity {
-			case security.SeverityCritical:
+			case starboard.SeverityCritical:
 				vs.CriticalCount++
-			case security.SeverityHigh:
+			case starboard.SeverityHigh:
 				vs.HighCount++
-			case security.SeverityMedium:
+			case starboard.SeverityMedium:
 				vs.MediumCount++
-			case security.SeverityLow:
+			case starboard.SeverityLow:
 				vs.LowCount++
 			default:
 				vs.UnknownCount++
@@ -80,32 +80,29 @@ func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options Work
 
 func (r *Repository) GetVulnerabilitiesForWorkload(ctx context.Context, options Workload) (reports []ContainerImageScanReport, err error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
-		APIVersion: aquaSecurityAPIVersion,
-		Kind:       vulnerabilitiesKind,
-		// TODO Report bug to Octant? Apparently the label selector doesn't work and I have to do filtering manually in a loop :(
-		//Selector: &labels.Set{
-		//	labelWorkloadKind: options.Kind,
-		//	labelWorkloadName: options.Name,
-		//},
+		APIVersion: fmt.Sprintf("%s/%s", aquasecurity.GroupName, starboard.VulnerabilitiesCRVersion),
+		Kind:       starboard.VulnerabilityKind,
+		Namespace:  options.Namespace,
+		Selector: &labels.Set{
+			kube.LabelResourceKind: options.Kind,
+			kube.LabelResourceName: options.Name,
+		},
 	})
 	if err != nil {
 		err = fmt.Errorf("listing vulnerabilities: %w", err)
 		return
 	}
-	var reportList security.VulnerabilityList
+	var reportList starboard.VulnerabilityList
 	err = r.structure(unstructuredList, &reportList)
 	if err != nil {
 		err = fmt.Errorf("unmarshalling JSON to VulnerabilityList: %w", err)
 		return
 	}
 	for _, item := range reportList.Items {
-		containerName, containerNameSpecified := item.Labels[kube.LabelContainerName]
-		if item.Labels[kube.LabelResourceKind] == options.Kind &&
-			item.Labels[kube.LabelResourceName] == options.Name &&
-			containerNameSpecified {
+		if containerName, containerNameSpecified := item.Labels[kube.LabelContainerName]; containerNameSpecified {
 			reports = append(reports, ContainerImageScanReport{
 				Name:   fmt.Sprintf("Container %s", containerName),
-				Report: item,
+				Report: *item.DeepCopy(),
 			})
 		}
 	}
@@ -117,10 +114,15 @@ func (r *Repository) GetVulnerabilitiesForWorkload(ctx context.Context, options 
 	return
 }
 
-func (r *Repository) GetConfigAudit(ctx context.Context, options Workload) (ca *security.ConfigAuditReport, err error) {
+func (r *Repository) GetConfigAudit(ctx context.Context, options Workload) (report *starboard.ConfigAuditReport, err error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
-		APIVersion: aquaSecurityAPIVersion,
-		Kind:       security.ConfigAuditReportKind,
+		APIVersion: fmt.Sprintf("%s/%s", aquasecurity.GroupName, starboard.ConfigAuditReportCRVersion),
+		Kind:       starboard.ConfigAuditReportKind,
+		Namespace:  options.Namespace,
+		Selector: &labels.Set{
+			kube.LabelResourceKind: options.Kind,
+			kube.LabelResourceName: options.Name,
+		},
 	})
 	if err != nil {
 		err = fmt.Errorf("listing config audit reports: %w", err)
@@ -129,74 +131,67 @@ func (r *Repository) GetConfigAudit(ctx context.Context, options Workload) (ca *
 	if len(unstructuredList.Items) == 0 {
 		return
 	}
-	var reportList security.ConfigAuditReportList
+	var reportList starboard.ConfigAuditReportList
 	err = r.structure(unstructuredList, &reportList)
 	if err != nil {
 		err = fmt.Errorf("unmarshalling JSON to ConfigAuditReportList: %w", err)
 		return
 	}
 
-	for _, item := range reportList.Items {
-		if item.Labels[kube.LabelResourceKind] == options.Kind &&
-			item.Labels[kube.LabelResourceName] == options.Name {
-			ca = &item
-			return
-		}
-	}
+	report = reportList.Items[0].DeepCopy()
 	return
 }
 
-func (r *Repository) GetCISKubeBenchReport(ctx context.Context, node string) (report *security.CISKubeBenchReport, err error) {
+func (r *Repository) GetCISKubeBenchReport(ctx context.Context, node string) (report *starboard.CISKubeBenchReport, err error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
-		APIVersion: aquaSecurityAPIVersion,
-		Kind:       security.CISKubeBenchReportKind,
-		Name:       node,
+		APIVersion: fmt.Sprintf("%s/%s", aquasecurity.GroupName, starboard.CISKubeBenchReportCRVersion),
+		Kind:       starboard.CISKubeBenchReportKind,
+		Selector: &labels.Set{
+			kube.LabelResourceKind:  KindNode,
+			kube.LabelResourceName:  node,
+			kube.LabelHistoryLatest: "true",
+		},
 	})
 	if err != nil {
 		err = fmt.Errorf("listing CIS Kubernetes Benchmarks: %w", err)
 		return
 	}
-	var reportList security.CISKubeBenchReportList
+	if len(unstructuredList.Items) == 0 {
+		return
+	}
+	var reportList starboard.CISKubeBenchReportList
 	err = r.structure(unstructuredList, &reportList)
 	if err != nil {
 		err = fmt.Errorf("unmarshalling JSON to CISKubernetesBenchmarkList: %w", err)
 		return
 	}
 
-	for _, r := range reportList.Items {
-		if r.Labels[kube.LabelResourceKind] == "Node" &&
-			r.Labels[kube.LabelResourceName] == node &&
-			r.Labels[kube.LabelHistoryLatest] == "true" {
-			report = &r
-			return
-		}
-	}
-
+	report = reportList.Items[0].DeepCopy()
 	return
 }
 
-func (r *Repository) GetKubeHunterReport(ctx context.Context) (report *security.KubeHunterReport, err error) {
+func (r *Repository) GetKubeHunterReport(ctx context.Context) (report *starboard.KubeHunterReport, err error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
-		APIVersion: aquaSecurityAPIVersion,
-		Kind:       security.KubeHunterReportKind,
+		APIVersion: fmt.Sprintf("%s/%s", aquasecurity.GroupName, starboard.KubeHunterReportCRVersion),
+		Kind:       starboard.KubeHunterReportKind,
+		Selector: &labels.Set{
+			kube.LabelResourceKind: ClusterKind,
+			kube.LabelResourceName: "cluster",
+		},
 	})
 	if err != nil {
 		return
 	}
-	var reportList security.KubeHunterReportList
+	if len(unstructuredList.Items) == 0 {
+		return
+	}
+	var reportList starboard.KubeHunterReportList
 	err = r.structure(unstructuredList, &reportList)
 	if err != nil {
 		return
 	}
 
-	for _, r := range reportList.Items {
-		// TODO We should be using label selectors here, but unfortunately Octant does ignore them (follow up with the Octant team)
-		if r.Name == "cluster" {
-			report = r.DeepCopy()
-			return
-		}
-	}
-
+	report = reportList.Items[0].DeepCopy()
 	return
 }
 
