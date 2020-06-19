@@ -87,18 +87,22 @@ func NewKubeHunterReportSummary(report *starboard.KubeHunterReport) (summary *co
 	totalLow := 0
 
 	for _, section := range report.Report.Vulnerabilities {
-		totalHigh += map[bool]int{true: 1, false: 0}[section.Severity == "high"]
-		totalMedium += map[bool]int{true: 1, false: 0}[section.Severity == "medium"]
-		totalLow += map[bool]int{true: 1, false: 0}[section.Severity == "low"]
-		println(section.Severity)
+		switch section.Severity {
+		case "high":
+			totalHigh += 1
+		case "medium":
+			totalMedium += 1
+		case "low":
+			totalLow += 1
+		}
 	}
 
 	summary = component.NewSummary("Summary")
 
 	summary.Add([]component.SummarySection{
-		{Header: "High ", Content: component.NewText(strconv.Itoa(totalHigh))},
-		{Header: "Medium ", Content: component.NewText(strconv.Itoa(totalMedium))},
-		{Header: "Low ", Content: component.NewText(strconv.Itoa(totalLow))},
+		{Header: "high ", Content: component.NewText(strconv.Itoa(totalHigh))},
+		{Header: "medium ", Content: component.NewText(strconv.Itoa(totalMedium))},
+		{Header: "low ", Content: component.NewText(strconv.Itoa(totalLow))},
 	}...)
 	return
 }
