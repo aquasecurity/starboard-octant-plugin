@@ -1,6 +1,8 @@
 package kubehunter
 
 import (
+	"strconv"
+
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view"
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
@@ -38,6 +40,10 @@ func NewReport(report *starboard.KubeHunterReport) (flexLayout *component.FlexLa
 			View:  view.NewScannerSummary(report.Report.Scanner),
 		},
 		{
+			Width: component.WidthThird,
+			View:  NewKubeHunterReportSummary(report),
+		},
+		{
 			Width: component.WidthFull,
 			View:  createTable(report.Report),
 		},
@@ -73,4 +79,30 @@ func createTable(section starboard.KubeHunterOutput) component.Component {
 	}
 
 	return table
+}
+
+func NewKubeHunterReportSummary(report *starboard.KubeHunterReport) (summary *component.Summary) {
+	totalHigh := 0
+	totalMedium := 0
+	totalLow := 0
+
+	for _, section := range report.Report.Vulnerabilities {
+		switch section.Severity {
+		case "high":
+			totalHigh += 1
+		case "medium":
+			totalMedium += 1
+		case "low":
+			totalLow += 1
+		}
+	}
+
+	summary = component.NewSummary("Summary")
+
+	summary.Add([]component.SummarySection{
+		{Header: "high ", Content: component.NewText(strconv.Itoa(totalHigh))},
+		{Header: "medium ", Content: component.NewText(strconv.Itoa(totalMedium))},
+		{Header: "low ", Content: component.NewText(strconv.Itoa(totalLow))},
+	}...)
+	return
 }
