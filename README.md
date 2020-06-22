@@ -1,7 +1,8 @@
 # Starboard Octant Plugin
 
 [![GitHub Release][release-img]][release]
-[![Build Actions][build-action-img]][build-action]
+[![GitHub Build Actions][build-action-img]][actions]
+[![GitHub Release Action][release-action-img]][actions]
 [![License][license-img]][license]
 
 > This is an [Octant][octant] plugin for [Starboard][starboard] which provides visibility into vulnerability assessment
@@ -194,7 +195,8 @@ This repository is available under the [Apache License 2.0][license].
 [release-img]: https://img.shields.io/github/release/aquasecurity/starboard-octant-plugin.svg
 [release]: https://github.com/aquasecurity/starboard-octant-plugin/releases
 [build-action-img]: https://github.com/aquasecurity/starboard-octant-plugin/workflows/build/badge.svg
-[build-action]: https://github.com/aquasecurity/starboard-octant-plugin/actions
+[release-action-img]: https://github.com/aquasecurity/starboard-octant-plugin/workflows/release/badge.svg
+[actions]: https://github.com/aquasecurity/starboard-octant-plugin/actions
 [license-img]: https://img.shields.io/github/license/aquasecurity/starboard-octant-plugin.svg
 [license]: https://github.com/aquasecurity/starboard-octant-plugin/blob/master/LICENSE
 
