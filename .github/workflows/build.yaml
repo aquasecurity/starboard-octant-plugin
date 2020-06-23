@@ -15,5 +15,8 @@ jobs:
           go-version: 1.13
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Build executable binary
-        run: make build
+      - name: Release snapshot
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          verson: v0.138.0
+          args: release --snapshot --skip-publish --rm-dist
