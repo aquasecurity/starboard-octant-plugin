@@ -2,6 +2,11 @@ package controller
 
 import (
 	"errors"
+	"fmt"
+
+	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/aquasecurity/starboard/pkg/kube"
 
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view/configaudit"
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view/kubebench"
@@ -22,38 +27,31 @@ func ResourceTabPrinter(request *service.PrintRequest) (tab plugin.TabResponse, 
 		return
 	}
 
-	accessor := meta.NewAccessor()
-	name, err := accessor.Name(request.Object)
-	if err != nil {
-		return
-	}
-	kind, err := accessor.Kind(request.Object)
-	if err != nil {
-		return
-	}
-	namespace, err := accessor.Namespace(request.Object)
+	workload, err := getWorkloadFromObject(request.Object)
 	if err != nil {
 		return
 	}
 
-	switch kind {
-	case model.WorkloadKindPod,
-		model.WorkloadKindDeployment,
-		model.WorkloadKindDaemonSet,
-		model.StatefulSetKind,
-		model.ReplicaSetKind,
-		model.ReplicationControllerKind,
-		model.CronJobKind,
-		model.JobKind:
-		return vulnerabilitiesTabPrinter(request, model.Workload{Kind: kind, Name: name, Namespace: namespace})
-	case model.KindNode:
-		return cisKubernetesBenchmarksTabPrinter(request, name)
+	switch workload.Kind {
+	case kube.KindPod,
+		kube.KindDeployment,
+		kube.KindDaemonSet,
+		kube.KindStatefulSet,
+		kube.KindReplicaSet,
+		kube.KindReplicationController,
+		kube.KindCronJob,
+		kube.KindJob:
+		return vulnerabilitiesTabPrinter(request, workload)
+	case kube.KindNode:
+		return cisKubernetesBenchmarksTabPrinter(request, workload.Name)
+	default:
+		err = fmt.Errorf("unrecognized workload kind: %s", workload.Kind)
+		return
 	}
 
-	return
 }
 
-func vulnerabilitiesTabPrinter(request *service.PrintRequest, workload model.Workload) (tabResponse plugin.TabResponse, err error) {
+func vulnerabilitiesTabPrinter(request *service.PrintRequest, workload kube.Object) (tabResponse plugin.TabResponse, err error) {
 	repository := model.NewRepository(request.DashboardClient)
 	reports, err := repository.GetVulnerabilitiesForWorkload(request.Context(), workload)
 	if err != nil {
@@ -87,28 +85,17 @@ func ResourcePrinter(request *service.PrintRequest) (response plugin.PrintRespon
 
 	repository := model.NewRepository(request.DashboardClient)
 
-	accessor := meta.NewAccessor()
-	kind, err := accessor.Kind(request.Object)
-	if err != nil {
-		return
-	}
-	name, err := accessor.Name(request.Object)
+	workload, err := getWorkloadFromObject(request.Object)
 	if err != nil {
 		return
 	}
 
-	summary, err := repository.GetVulnerabilitiesSummary(request.Context(), model.Workload{
-		Kind: kind,
-		Name: name,
-	})
+	summary, err := repository.GetVulnerabilitiesSummary(request.Context(), workload)
 	if err != nil {
 		return
 	}
 
-	configAudit, err := repository.GetConfigAudit(request.Context(), model.Workload{
-		Kind: kind,
-		Name: name,
-	})
+	configAudit, err := repository.GetConfigAudit(request.Context(), workload)
 	if err != nil {
 		return
 	}
@@ -121,6 +108,32 @@ func ResourcePrinter(request *service.PrintRequest) (response plugin.PrintRespon
 				View:  configaudit.NewReport(configAudit),
 			},
 		},
+	}
+	return
+}
+
+func getWorkloadFromObject(o runtime.Object) (workload kube.Object, err error) {
+	accessor := meta.NewAccessor()
+
+	kind, err := accessor.Kind(o)
+	if err != nil {
+		return
+	}
+
+	name, err := accessor.Name(o)
+	if err != nil {
+		return
+	}
+
+	namespace, err := accessor.Namespace(o)
+	if err != nil {
+		return
+	}
+
+	workload = kube.Object{
+		Kind:      kube.Kind(kind),
+		Name:      name,
+		Namespace: namespace,
 	}
 	return
 }

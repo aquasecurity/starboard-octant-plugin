@@ -32,7 +32,7 @@ pre-built binary releases.
 
 ### Prerequisites
 
-- Octant should first be installed. On macOS this is as simple as `brew install octant`. For installation instructions
+- Octant >= 0.13 should first be installed. On macOS this is as simple as `brew install octant`. For installation instructions
   on other operating systems and package managers, see [Octant Installation][octant-installation].
 - Environment authenticated against your Kubernetes cluster
 

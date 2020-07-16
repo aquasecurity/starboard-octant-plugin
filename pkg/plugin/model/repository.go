@@ -20,24 +20,8 @@ import (
 )
 
 const (
-	WorkloadKindPod           = "Pod"
-	WorkloadKindDeployment    = "Deployment"
-	WorkloadKindDaemonSet     = "DaemonSet"
-	StatefulSetKind           = "StatefulSet"
-	ReplicaSetKind            = "ReplicaSet"
-	ReplicationControllerKind = "ReplicationController"
-	JobKind                   = "Job"
-	CronJobKind               = "CronJob"
-	KindNode                  = "Node"
-	ClusterKind               = "Cluster"
+	ClusterKind = "Cluster"
 )
-
-// Deprecated use structure defined by Starboard model to represent Kubernetes-native resources including workloads.
-type Workload struct {
-	Kind      string
-	Name      string
-	Namespace string
-}
 
 type Repository struct {
 	client service.Dashboard
@@ -54,7 +38,7 @@ type ContainerImageScanReport struct {
 	Report starboard.Vulnerability
 }
 
-func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options Workload) (vs starboard.VulnerabilitySummary, err error) {
+func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options kube.Object) (vs starboard.VulnerabilitySummary, err error) {
 	containerReports, err := r.GetVulnerabilitiesForWorkload(ctx, options)
 	if err != nil {
 		return vs, err
@@ -78,13 +62,13 @@ func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options Work
 	return
 }
 
-func (r *Repository) GetVulnerabilitiesForWorkload(ctx context.Context, options Workload) (reports []ContainerImageScanReport, err error) {
+func (r *Repository) GetVulnerabilitiesForWorkload(ctx context.Context, options kube.Object) (reports []ContainerImageScanReport, err error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
 		APIVersion: fmt.Sprintf("%s/%s", aquasecurity.GroupName, starboard.VulnerabilitiesCRVersion),
 		Kind:       starboard.VulnerabilityKind,
 		Namespace:  options.Namespace,
 		Selector: &labels.Set{
-			kube.LabelResourceKind: options.Kind,
+			kube.LabelResourceKind: string(options.Kind),
 			kube.LabelResourceName: options.Name,
 		},
 	})
@@ -114,13 +98,13 @@ func (r *Repository) GetVulnerabilitiesForWorkload(ctx context.Context, options 
 	return
 }
 
-func (r *Repository) GetConfigAudit(ctx context.Context, options Workload) (report *starboard.ConfigAuditReport, err error) {
+func (r *Repository) GetConfigAudit(ctx context.Context, options kube.Object) (report *starboard.ConfigAuditReport, err error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
 		APIVersion: fmt.Sprintf("%s/%s", aquasecurity.GroupName, starboard.ConfigAuditReportCRVersion),
 		Kind:       starboard.ConfigAuditReportKind,
 		Namespace:  options.Namespace,
 		Selector: &labels.Set{
-			kube.LabelResourceKind: options.Kind,
+			kube.LabelResourceKind: string(options.Kind),
 			kube.LabelResourceName: options.Name,
 		},
 	})
@@ -147,7 +131,7 @@ func (r *Repository) GetCISKubeBenchReport(ctx context.Context, node string) (re
 		APIVersion: fmt.Sprintf("%s/%s", aquasecurity.GroupName, starboard.CISKubeBenchReportCRVersion),
 		Kind:       starboard.CISKubeBenchReportKind,
 		Selector: &labels.Set{
-			kube.LabelResourceKind:  KindNode,
+			kube.LabelResourceKind:  string(kube.KindNode),
 			kube.LabelResourceName:  node,
 			kube.LabelHistoryLatest: "true",
 		},
