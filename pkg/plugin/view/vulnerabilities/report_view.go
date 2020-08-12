@@ -93,7 +93,7 @@ func createVulnerabilitiesTable(containerName string, report starboard.Vulnerabi
 
 func getLinkComponent(v starboard.VulnerabilityItem) component.Component {
 	if len(v.Links) > 0 {
-		return component.NewLink(v.VulnerabilityID, v.VulnerabilityID, v.Links[0])
+		return component.NewMarkdownText(view.ToMarkdownLink(v.VulnerabilityID, v.Links[0]))
 	}
 	return component.NewText(v.VulnerabilityID)
 }
