@@ -12,3 +12,7 @@ deploy: build
 .PHONY: uninstall
 uninstall:
 	rm -i $(OCTANT_PLUGINS_DIR)/starboard-octant-plugin
+
+.PHONY: test
+test:
+	go test ./...
