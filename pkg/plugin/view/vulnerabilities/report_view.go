@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/aquasecurity/starboard/pkg/kube"
+
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view"
 
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/model"
@@ -14,7 +16,7 @@ import (
 )
 
 // NewReport creates a new view component for displaying the specified ContainerImageScanReport.
-func NewReport(workload model.Workload, reports []model.ContainerImageScanReport) (flexLayout component.FlexLayout) {
+func NewReport(workload kube.Object, reports []model.ContainerImageScanReport) (flexLayout component.FlexLayout) {
 	flexLayout = *component.NewFlexLayout("Vulnerabilities")
 	if len(reports) == 0 {
 		flexLayout.AddSections(component.FlexLayoutSection{
@@ -31,7 +33,7 @@ func NewReport(workload model.Workload, reports []model.ContainerImageScanReport
 						"[trivy]: https://github.com/aquasecurity/trivy\n"+
 						"[starboard-cli]: https://github.com/aquasecurity/starboard#starboard-cli",
 					starboard.VulnerabilitiesCRName,
-					strings.ToLower(workload.Kind),
+					strings.ToLower(string(workload.Kind)),
 					workload.Name,
 					workload.Namespace,
 				)),
