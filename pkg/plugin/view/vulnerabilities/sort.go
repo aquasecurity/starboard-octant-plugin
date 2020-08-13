@@ -15,13 +15,13 @@ func (s VulnerabilityItems) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 type BySeverity struct{ VulnerabilityItems }
 
 var severityOrder = map[starboard.Severity]int{
-	starboard.SeverityCritical: 5,
-	starboard.SeverityHigh:     4,
-	starboard.SeverityMedium:   3,
-	starboard.SeverityLow:      2,
-	starboard.SeverityUnknown:  1,
+	starboard.SeverityCritical: 0,
+	starboard.SeverityHigh:     1,
+	starboard.SeverityMedium:   2,
+	starboard.SeverityLow:      3,
+	starboard.SeverityUnknown:  4,
 }
 
 func (s BySeverity) Less(i, j int) bool {
-	return severityOrder[s.VulnerabilityItems[i].Severity] > severityOrder[s.VulnerabilityItems[j].Severity]
+	return severityOrder[s.VulnerabilityItems[i].Severity] < severityOrder[s.VulnerabilityItems[j].Severity]
 }
