@@ -2,6 +2,7 @@ package vulnerabilities
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -75,6 +76,8 @@ func createVulnerabilitiesTable(containerName string, report starboard.Vulnerabi
 		containerName, "There are no vulnerabilities!",
 		component.NewTableCols("ID", "Severity", "Title", "Resource", "Installed Version", "Fixed Version"),
 		[]component.TableRow{})
+
+	sort.Stable(BySeverity{report.Report.Vulnerabilities})
 
 	for _, vi := range report.Report.Vulnerabilities {
 		tr := component.TableRow{
