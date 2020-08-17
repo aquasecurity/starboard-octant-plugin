@@ -59,7 +59,7 @@ version of the plugin.
 You must have a working Go environment.
 
 ```
-$ git clone git clone git@github.com:aquasecurity/starboard-octant-plugin.git
+$ git clone git@github.com:aquasecurity/starboard-octant-plugin.git
 $ cd starboard-octant-plugin
 $ make deploy
 ```
