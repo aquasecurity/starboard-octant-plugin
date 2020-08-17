@@ -4,6 +4,7 @@
 [![GitHub Build Actions][build-action-img]][actions]
 [![GitHub Release Action][release-action-img]][actions]
 [![License][license-img]][license]
+[![GitHub All Releases][github-all-releases-img]][release]
 
 > This is an [Octant][octant] plugin for [Starboard][starboard] which provides visibility into vulnerability assessment
 > reports for Kubernetes workloads stored as [custom security resources][starboard-crds].
@@ -192,13 +193,14 @@ where `$OCTANT_PLUGIN_PATH` is the default plugins location respected by Octant.
 
 This repository is available under the [Apache License 2.0][license].
 
-[release-img]: https://img.shields.io/github/release/aquasecurity/starboard-octant-plugin.svg
+[release-img]: https://img.shields.io/github/release/aquasecurity/starboard-octant-plugin.svg?logo=github
 [release]: https://github.com/aquasecurity/starboard-octant-plugin/releases
 [build-action-img]: https://github.com/aquasecurity/starboard-octant-plugin/workflows/build/badge.svg
 [release-action-img]: https://github.com/aquasecurity/starboard-octant-plugin/workflows/release/badge.svg
 [actions]: https://github.com/aquasecurity/starboard-octant-plugin/actions
 [license-img]: https://img.shields.io/github/license/aquasecurity/starboard-octant-plugin.svg
 [license]: https://github.com/aquasecurity/starboard-octant-plugin/blob/master/LICENSE
+[github-all-releases-img]: https://img.shields.io/github/downloads/aquasecurity/starboard-octant-plugin/total?logo=github
 
 [octant]: https://octant.dev/
 [octant-installation]: https://github.com/vmware-tanzu/octant#installation
