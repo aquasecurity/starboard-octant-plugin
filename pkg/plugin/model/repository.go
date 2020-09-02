@@ -131,9 +131,8 @@ func (r *Repository) GetCISKubeBenchReport(ctx context.Context, node string) (re
 		APIVersion: fmt.Sprintf("%s/%s", aquasecurity.GroupName, starboard.CISKubeBenchReportCRVersion),
 		Kind:       starboard.CISKubeBenchReportKind,
 		Selector: &labels.Set{
-			kube.LabelResourceKind:  string(kube.KindNode),
-			kube.LabelResourceName:  node,
-			kube.LabelHistoryLatest: "true",
+			kube.LabelResourceKind: string(kube.KindNode),
+			kube.LabelResourceName: node,
 		},
 	})
 	if err != nil {
