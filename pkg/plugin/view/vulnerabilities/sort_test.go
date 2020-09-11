@@ -9,7 +9,7 @@ import (
 )
 
 func TestBySeverity(t *testing.T) {
-	items := []starboard.VulnerabilityItem{
+	items := []starboard.Vulnerability{
 		{VulnerabilityID: "CVE-0000-0001", Severity: starboard.SeverityLow},
 		{VulnerabilityID: "CVE-0000-0002", Severity: starboard.SeverityMedium},
 		{VulnerabilityID: "CVE-0000-0003", Severity: starboard.SeverityMedium},
@@ -20,7 +20,7 @@ func TestBySeverity(t *testing.T) {
 
 	sort.Stable(BySeverity{items})
 
-	assert.Equal(t, []starboard.VulnerabilityItem{
+	assert.Equal(t, []starboard.Vulnerability{
 		{VulnerabilityID: "CVE-0000-0004", Severity: starboard.SeverityCritical},
 		{VulnerabilityID: "CVE-0000-0005", Severity: starboard.SeverityHigh},
 		{VulnerabilityID: "CVE-0000-0006", Severity: starboard.SeverityHigh},

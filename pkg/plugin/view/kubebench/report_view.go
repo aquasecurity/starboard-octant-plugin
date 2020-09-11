@@ -52,7 +52,7 @@ func NewReport(benchmark *starboard.CISKubeBenchReport) (flexLayout component.Fl
 		},
 		{
 			Width: component.WidthThird,
-			View:  NewCISKubeBenchReportSummary(benchmark),
+			View:  NewCISKubeBenchSummary(benchmark.Report.Summary),
 		},
 	}, uiSections...)
 
@@ -82,27 +82,14 @@ func createTableForSection(section starboard.CISKubeBenchSection) component.Comp
 	return table
 }
 
-// TODO Implement summary counting
-func NewCISKubeBenchReportSummary(report *starboard.CISKubeBenchReport) (summary *component.Summary) {
-	totalPass := 0
-	totalInfo := 0
-	totalWarn := 0
-	totalFail := 0
+func NewCISKubeBenchSummary(summary starboard.CISKubeBenchSummary) (summaryComponent *component.Summary) {
+	summaryComponent = component.NewSummary("Summary")
 
-	for _, section := range report.Report.Sections {
-		totalPass += section.TotalPass
-		totalInfo += section.TotalInfo
-		totalWarn += section.TotalWarn
-		totalFail += section.TotalFail
-	}
-
-	summary = component.NewSummary("Summary")
-
-	summary.Add([]component.SummarySection{
-		{Header: "PASS ", Content: component.NewText(strconv.Itoa(totalPass))},
-		{Header: "INFO", Content: component.NewText(strconv.Itoa(totalInfo))},
-		{Header: "WARN ", Content: component.NewText(strconv.Itoa(totalWarn))},
-		{Header: "FAIL ", Content: component.NewText(strconv.Itoa(totalFail))},
+	summaryComponent.Add([]component.SummarySection{
+		{Header: "PASS ", Content: component.NewText(strconv.Itoa(summary.PassCount))},
+		{Header: "INFO", Content: component.NewText(strconv.Itoa(summary.InfoCount))},
+		{Header: "WARN ", Content: component.NewText(strconv.Itoa(summary.WarnCount))},
+		{Header: "FAIL ", Content: component.NewText(strconv.Itoa(summary.FailCount))},
 	}...)
 	return
 }

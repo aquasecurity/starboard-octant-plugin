@@ -33,7 +33,7 @@ func NewReport(workload kube.Object, reports []model.ContainerImageScanReport) (
 						"\n"+
 						"[trivy]: https://github.com/aquasecurity/trivy\n"+
 						"[starboard-cli]: https://github.com/aquasecurity/starboard#starboard-cli",
-					starboard.VulnerabilitiesCRName,
+					starboard.VulnerabilityReportsCRName,
 					strings.ToLower(string(workload.Kind)),
 					workload.Name,
 					workload.Namespace,
@@ -71,7 +71,7 @@ func NewReport(workload kube.Object, reports []model.ContainerImageScanReport) (
 	return flexLayout
 }
 
-func createVulnerabilitiesTable(containerName string, report starboard.Vulnerability) component.Component {
+func createVulnerabilitiesTable(containerName string, report starboard.VulnerabilityReport) component.Component {
 	table := component.NewTableWithRows(
 		containerName, "There are no vulnerabilities!",
 		component.NewTableCols("ID", "Severity", "Title", "Resource", "Installed Version", "Fixed Version"),
@@ -94,7 +94,7 @@ func createVulnerabilitiesTable(containerName string, report starboard.Vulnerabi
 	return table
 }
 
-func getLinkComponent(v starboard.VulnerabilityItem) component.Component {
+func getLinkComponent(v starboard.Vulnerability) component.Component {
 	if len(v.Links) > 0 {
 		return component.NewMarkdownText(view.ToMarkdownLink(v.VulnerabilityID, v.Links[0]))
 	}

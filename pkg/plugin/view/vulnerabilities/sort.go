@@ -4,7 +4,7 @@ import (
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 )
 
-type VulnerabilityItems []starboard.VulnerabilityItem
+type VulnerabilityItems []starboard.Vulnerability
 
 func (s VulnerabilityItems) Len() int { return len(s) }
 
