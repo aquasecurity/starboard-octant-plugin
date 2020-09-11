@@ -35,7 +35,7 @@ func NewRepository(client service.Dashboard) *Repository {
 
 type ContainerImageScanReport struct {
 	Name   string
-	Report starboard.Vulnerability
+	Report starboard.VulnerabilityReport
 }
 
 func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options kube.Object) (vs starboard.VulnerabilitySummary, err error) {
@@ -64,8 +64,8 @@ func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options kube
 
 func (r *Repository) GetVulnerabilitiesForWorkload(ctx context.Context, options kube.Object) (reports []ContainerImageScanReport, err error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
-		APIVersion: fmt.Sprintf("%s/%s", aquasecurity.GroupName, starboard.VulnerabilitiesCRVersion),
-		Kind:       starboard.VulnerabilityKind,
+		APIVersion: fmt.Sprintf("%s/%s", aquasecurity.GroupName, starboard.VulnerabilityReportsCRVersion),
+		Kind:       starboard.VulnerabilityReportKind,
 		Namespace:  options.Namespace,
 		Selector: &labels.Set{
 			kube.LabelResourceKind: string(options.Kind),
@@ -76,7 +76,7 @@ func (r *Repository) GetVulnerabilitiesForWorkload(ctx context.Context, options 
 		err = fmt.Errorf("listing vulnerabilities: %w", err)
 		return
 	}
-	var reportList starboard.VulnerabilityList
+	var reportList starboard.VulnerabilityReportList
 	err = r.structure(unstructuredList, &reportList)
 	if err != nil {
 		err = fmt.Errorf("unmarshalling JSON to VulnerabilityList: %w", err)
