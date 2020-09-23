@@ -8,7 +8,7 @@ import (
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 )
 
-// NewReport creates a new view component for displaying the specified KubeHunerReport.
+// NewReport creates a new view component for displaying the specified KubeHunterReport.
 func NewReport(report *starboard.KubeHunterReport) (flexLayout *component.FlexLayout) {
 
 	flexLayout = component.NewFlexLayout("kube-hunter Report")
@@ -41,7 +41,7 @@ func NewReport(report *starboard.KubeHunterReport) (flexLayout *component.FlexLa
 		},
 		{
 			Width: component.WidthThird,
-			View:  NewKubeHunterReportSummary(report),
+			View:  NewKubeHunterReportSummary(report.Report.Summary),
 		},
 		{
 			Width: component.WidthFull,
@@ -68,7 +68,7 @@ func createTable(section starboard.KubeHunterOutput) component.Component {
 
 	for _, v := range section.Vulnerabilities {
 		tr := component.TableRow{
-			columnSeverity:      component.NewText(v.Severity),
+			columnSeverity:      component.NewText(string(v.Severity)),
 			columnID:            component.NewText(v.ID),
 			columnVulnerability: component.NewText(v.Vulnerability),
 			columnCategory:      component.NewText(v.Category),
@@ -81,28 +81,11 @@ func createTable(section starboard.KubeHunterOutput) component.Component {
 	return table
 }
 
-func NewKubeHunterReportSummary(report *starboard.KubeHunterReport) (summary *component.Summary) {
-	totalHigh := 0
-	totalMedium := 0
-	totalLow := 0
-
-	for _, section := range report.Report.Vulnerabilities {
-		switch section.Severity {
-		case "high":
-			totalHigh += 1
-		case "medium":
-			totalMedium += 1
-		case "low":
-			totalLow += 1
-		}
-	}
-
-	summary = component.NewSummary("Summary")
-
-	summary.Add([]component.SummarySection{
-		{Header: "high ", Content: component.NewText(strconv.Itoa(totalHigh))},
-		{Header: "medium ", Content: component.NewText(strconv.Itoa(totalMedium))},
-		{Header: "low ", Content: component.NewText(strconv.Itoa(totalLow))},
+func NewKubeHunterReportSummary(summary starboard.KubeHunterSummary) (componentSummary *component.Summary) {
+	componentSummary = component.NewSummary("Summary", []component.SummarySection{
+		{Header: "high ", Content: component.NewText(strconv.Itoa(summary.HighCount))},
+		{Header: "medium ", Content: component.NewText(strconv.Itoa(summary.MediumCount))},
+		{Header: "low ", Content: component.NewText(strconv.Itoa(summary.LowCount))},
 	}...)
 	return
 }

@@ -108,47 +108,16 @@ func createChecksTable(checks []starboard.Check) component.Component {
 	return table
 }
 
-func NewSummary(report starboard.ConfigAudit) (summary *component.Summary) {
-	counts := calculateSummary(report)
-
-	summary = component.NewSummary("Summary")
-
-	var sections []component.SummarySection
-
-	for header, count := range counts {
-		sections = append(sections, component.SummarySection{
-			Header: header, Content: component.NewText(strconv.Itoa(count)),
-		})
+func NewSummary(report starboard.ConfigAudit) (summaryComponent *component.Summary) {
+	sections := []component.SummarySection{
+		{Header: "danger", Content: component.NewText(strconv.Itoa(report.Summary.DangerCount))},
+		{Header: "warning", Content: component.NewText(strconv.Itoa(report.Summary.WarningCount))},
 	}
-
 	sort.Stable(ByHeader(sections))
 
-	summary.Add(sections...)
+	summaryComponent = component.NewSummary("Summary", sections...)
+
 	return
-}
-
-func calculateSummary(report starboard.ConfigAudit) map[string]int {
-	counts := map[string]int{
-		"error":   0,
-		"warning": 0,
-	}
-
-	for _, check := range report.PodChecks {
-		if check.Success {
-			continue
-		}
-		counts[check.Severity] = counts[check.Severity] + 1
-	}
-
-	for _, checks := range report.ContainerChecks {
-		for _, check := range checks {
-			if check.Success {
-				continue
-			}
-			counts[check.Severity] = counts[check.Severity] + 1
-		}
-	}
-	return counts
 }
 
 // ByHeader implements sort.Interface based on the Header field of SummarySection.

@@ -33,8 +33,8 @@ pre-built binary releases.
 
 ### Prerequisites
 
-- Octant >= 0.13 should first be installed. On macOS this is as simple as `brew install octant`. For installation instructions
-  on other operating systems and package managers, see [Octant Installation][octant-installation].
+- Octant >= 0.13 should first be installed. On macOS this is as simple as `brew install octant`. For installation
+  instructions on other operating systems and package managers, see [Octant Installation][octant-installation].
 - Environment authenticated against your Kubernetes cluster
 
 > In the following instructions we assume that the `$HOME/.config/octant/plugins` directory is the default plugins
@@ -69,7 +69,8 @@ The `make deploy` goal copies the plugin binary to the `$HOME/.config/octant/plu
 
 ## Getting Started
 
-As an example let's run an old version of `nginx` that we know has vulnerabilities. Create an `nginx` Deployment in the `dev` namespace:
+As an example let's run an old version of `nginx` that we know has vulnerabilities. Create an `nginx` Deployment in the
+`dev` namespace:
 
 ```
 $ kubectl create deployment nginx --image nginx:1.16 --namespace dev
@@ -82,8 +83,8 @@ $ starboard find vulnerabilities deploy/nginx --namespace dev
 ```
 
 > In the example above we are using the Starboard CLI to populate the vulnerability information. However, another option
-> might be an operator which populates the Starboard CRDs. No matter how the CRDs are created, they are visible within
-> Octant.
+> might be the [operator][starboard-operator] which populates the Starboard CRDs. No matter how the CRDs are created,
+> they are visible within Octant.
 
 You can now display the vulnerabilities reports in the Octant interface by following these steps:
 
@@ -104,7 +105,7 @@ You can now display the vulnerabilities reports in the Octant interface by follo
    or
 
    ```
-   $ kubectl get vulnerabilities.aquasecurity.github.io \
+   $ kubectl get vulnerabilityreports.aquasecurity.github.io \
      --selector starboard.resource.kind=Deployment,starboard.resource.name=nginx \
      --namespace dev \
      --output yaml
@@ -157,7 +158,7 @@ are associated with [Nodes][k8s-node]. To display the latest report for the spec
 
    ```
    $ kubectl get ciskubebenchreports.aquasecurity.github.io \
-     --selector starboard.history.latest=true,starboard.resource.kind=Node,starboard.resource.name=minikube \
+     --selector starboard.resource.kind=Node,starboard.resource.name=minikube \
      --output yaml
    ```
 
@@ -208,5 +209,6 @@ This repository is available under the [Apache License 2.0][license].
 [starboard]: https://github.com/aquasecurity/starboard
 [starboard-crds]: https://github.com/aquasecurity/starboard#custom-security-resources-definitions
 [starboard-cli]: https://github.com/aquasecurity/starboard#starboard-cli
+[starboard-operator]: https://github.com/aquasecurity/starboard-operator
 
 [k8s-node]: https://kubernetes.io/docs/concepts/architecture/nodes/
