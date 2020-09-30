@@ -5,7 +5,7 @@ OCTANT_PLUGINS_DIR = ~/.config/octant/plugins
 build:
 	go build -o bin/starboard-octant-plugin cmd/starboard-octant-plugin/main.go
 
-deploy: build
+install: build
 	mkdir -p $(OCTANT_PLUGINS_DIR)
 	cp -vi bin/starboard-octant-plugin $(OCTANT_PLUGINS_DIR)
 

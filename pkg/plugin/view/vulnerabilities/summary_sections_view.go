@@ -7,7 +7,10 @@ import (
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 )
 
-func NewSummarySections(summary security.VulnerabilitySummary) []component.SummarySection {
+func NewSummarySections(summary *security.VulnerabilitySummary) []component.SummarySection {
+	if summary == nil {
+		return []component.SummarySection{}
+	}
 	return []component.SummarySection{
 		{Header: "Critical Vulnerabilities", Content: component.NewText(strconv.Itoa(summary.CriticalCount))},
 		{Header: "High Vulnerabilities", Content: component.NewText(strconv.Itoa(summary.HighCount))},

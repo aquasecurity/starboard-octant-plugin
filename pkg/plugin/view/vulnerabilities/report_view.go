@@ -17,18 +17,42 @@ import (
 )
 
 // NewReport creates a new view component for displaying the specified ContainerImageScanReport.
-func NewReport(workload kube.Object, reports []model.ContainerImageScanReport) (flexLayout component.FlexLayout) {
-	flexLayout = *component.NewFlexLayout("Vulnerabilities")
+func NewReport(workload kube.Object, vulnerabilityReportsDefined bool, reports []model.NamedVulnerabilityReport) (flexLayout component.FlexLayout) {
+	flexLayout = *component.NewFlexLayout(fmt.Sprintf("Vulnerabilities"))
+
+	if !vulnerabilityReportsDefined {
+		flexLayout.AddSections(component.FlexLayoutSection{
+			{
+				Width: component.WidthFull,
+				View: component.NewMarkdownText(fmt.Sprintf(
+					"The `%[1]s` resource, which represents vulnerability reports is not defined.\n"+
+						"> You can define such resource by running the [Starboard CLI][starboard-cli] init command:\n"+
+						"> ```\n"+
+						"> $ kubectl starboard init\n"+
+						"> ```\n"+
+						"or\n"+
+						"> ```\n"+
+						"> $ kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/kube/crd/vulnerabilityreports-crd.yaml\n"+
+						"> ```\n"+
+						"\n"+
+						"[starboard-cli]: https://github.com/aquasecurity/starboard#starboard-cli",
+					starboard.VulnerabilityReportsCRName,
+				)),
+			},
+		})
+		return
+	}
+
 	if len(reports) == 0 {
 		flexLayout.AddSections(component.FlexLayoutSection{
 			{
 				Width: component.WidthFull,
 				View: component.NewMarkdownText(fmt.Sprintf(
-					"These reports are not available.\n"+
+					"Vulnerability reports are not available for %[2]s/%[3]s in the %[4]s namespace.\n"+
 						"> Note that vulnerability reports are represented by instances of the `%[1]s` resource.\n"+
 						"> You can create such reports by running [Trivy][trivy] with [Starboard CLI][starboard-cli]:\n"+
 						"> ```\n"+
-						"> $ starboard find vulnerabilities %[2]s/%[3]s --namespace %[4]s\n"+
+						"> $ kubectl starboard find vulnerabilities %[2]s/%[3]s --namespace %[4]s\n"+
 						"> ```\n"+
 						"\n"+
 						"[trivy]: https://github.com/aquasecurity/trivy\n"+
@@ -73,7 +97,7 @@ func NewReport(workload kube.Object, reports []model.ContainerImageScanReport) (
 
 func createVulnerabilitiesTable(containerName string, report starboard.VulnerabilityReport) component.Component {
 	table := component.NewTableWithRows(
-		containerName, "There are no vulnerabilities!",
+		fmt.Sprintf("Container %s", containerName), "There are no vulnerabilities!",
 		component.NewTableCols("ID", "Severity", "Title", "Resource", "Installed Version", "Fixed Version"),
 		[]component.TableRow{})
 

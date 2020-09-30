@@ -4,14 +4,18 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
+
+	"github.com/aquasecurity/starboard/pkg/kube"
 
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view"
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 )
 
-func NewReport(report *starboard.ConfigAuditReport) (flexLayout *component.FlexLayout) {
+func NewReport(workload kube.Object, configAuditReportsDefined bool, report *starboard.ConfigAuditReport) (flexLayout *component.FlexLayout) {
 	flexLayout = component.NewFlexLayout("")
+
 	flexLayout.AddSections(component.FlexLayoutSection{
 		{
 			Width: component.WidthFull,
@@ -19,21 +23,47 @@ func NewReport(report *starboard.ConfigAuditReport) (flexLayout *component.FlexL
 		},
 	})
 
+	if !configAuditReportsDefined {
+		flexLayout.AddSections(component.FlexLayoutSection{
+			{
+				Width: component.WidthFull,
+				View: component.NewMarkdownText(fmt.Sprintf(
+					"The `%[1]s` resource, which represents config audit reports is not defined.\n"+
+						"> You can define such resource by running the [Starboard CLI][starboard-cli] init command:\n"+
+						"> ```\n"+
+						"> $ kubectl starboard init\n"+
+						"> ```\n"+
+						"or\n"+
+						"> ```\n"+
+						"> $ kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/kube/crd/configauditreports-crd.yaml\n"+
+						"> ```\n"+
+						"\n"+
+						"[starboard-cli]: https://github.com/aquasecurity/starboard#starboard-cli",
+					starboard.ConfigAuditReportCRName,
+				)),
+			},
+		})
+		return
+	}
+
 	if report == nil {
 		flexLayout.AddSections(component.FlexLayoutSection{
 			{
 				Width: component.WidthFull,
 				View: component.NewMarkdownText(fmt.Sprintf(
-					"These reports are not available.\n"+
-						"> Note that configuration audit reports are represented by instances of the `%[1]s` resource.\n"+
+					"Config audit reports are not available.\n"+
+						"> Note that config audit reports are represented by instances of the `%[1]s` resource.\n"+
 						"> You can create such reports by running [Polaris][polaris] with [Starboard CLI][starboard-cli]:\n"+
 						"> ```\n"+
-						"> $ starboard polaris\n"+
+						"> $ kubectl starboard polaris %[2]s/%[3]s --namespace %[4]s\n"+
 						"> ```\n"+
 						"\n"+
 						"[polaris]: https://www.fairwinds.com/polaris\n"+
 						"[starboard-cli]: https://github.com/aquasecurity/starboard#starboard-cli",
 					starboard.ConfigAuditReportCRName,
+					strings.ToLower(string(workload.Kind)),
+					workload.Name,
+					workload.Namespace,
 				)),
 			},
 		})

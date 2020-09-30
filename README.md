@@ -62,10 +62,10 @@ You must have a working Go environment.
 ```
 $ git clone git@github.com:aquasecurity/starboard-octant-plugin.git
 $ cd starboard-octant-plugin
-$ make deploy
+$ make install
 ```
 
-The `make deploy` goal copies the plugin binary to the `$HOME/.config/octant/plugins` directory.
+The `make install` goal copies the plugin binary to the `$HOME/.config/octant/plugins` directory.
 
 ## Getting Started
 
