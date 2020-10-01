@@ -66,7 +66,7 @@ func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options kube
 
 func (r *Repository) GetCustomResourceDefinitionByName(ctx context.Context, name string) (*v1.CustomResourceDefinition, error) {
 	unstructuredResp, err := r.client.Get(ctx, store.Key{
-		APIVersion: fmt.Sprintf("%s/%s", "apiextensions.k8s.io", "v1beta1"),
+		APIVersion: "apiextensions.k8s.io/v1beta1",
 		Kind:       "CustomResourceDefinition",
 		Name:       name,
 	})

@@ -26,7 +26,7 @@ func NewReport(workload kube.Object, vulnerabilityReportsDefined bool, reports [
 				Width: component.WidthFull,
 				View: component.NewMarkdownText(fmt.Sprintf(
 					"The `%[1]s` resource, which represents vulnerability reports, is not defined.\n"+
-						"> You can define such resource by running the [Starboard CLI][starboard-cli] init command:\n"+
+						"> You can create this resource definition by running the [Starboard CLI][starboard-cli] init command:\n"+
 						"> ```\n"+
 						"> $ kubectl starboard init\n"+
 						"> ```\n"+
