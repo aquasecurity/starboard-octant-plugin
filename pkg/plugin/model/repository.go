@@ -7,12 +7,12 @@ import (
 	"sort"
 	"strings"
 
+	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
-
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
@@ -33,15 +33,17 @@ func NewRepository(client service.Dashboard) *Repository {
 	}
 }
 
-type ContainerImageScanReport struct {
+// NamedVulnerabilityReport allows sorting VulnerabilityReports by container name.
+type NamedVulnerabilityReport struct {
 	Name   string
 	Report starboard.VulnerabilityReport
 }
 
-func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options kube.Object) (vs starboard.VulnerabilitySummary, err error) {
-	containerReports, err := r.GetVulnerabilitiesForWorkload(ctx, options)
+func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options kube.Object) (*starboard.VulnerabilitySummary, error) {
+	vs := &starboard.VulnerabilitySummary{}
+	containerReports, err := r.GetVulnerabilityReportsByOwner(ctx, options)
 	if err != nil {
-		return vs, err
+		return nil, err
 	}
 	for _, cr := range containerReports {
 		for _, v := range cr.Report.Report.Vulnerabilities {
@@ -59,17 +61,31 @@ func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options kube
 			}
 		}
 	}
-	return
+	return vs, nil
 }
 
-func (r *Repository) GetVulnerabilitiesForWorkload(ctx context.Context, options kube.Object) (reports []ContainerImageScanReport, err error) {
+func (r *Repository) GetCustomResourceDefinitionByName(ctx context.Context, name string) (*v1.CustomResourceDefinition, error) {
+	unstructuredResp, err := r.client.Get(ctx, store.Key{
+		APIVersion: "apiextensions.k8s.io/v1beta1",
+		Kind:       "CustomResourceDefinition",
+		Name:       name,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var crd v1.CustomResourceDefinition
+	err = r.structure(unstructuredResp, &crd)
+	return &crd, err
+}
+
+func (r *Repository) GetVulnerabilityReportsByOwner(ctx context.Context, owner kube.Object) (reports []NamedVulnerabilityReport, err error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
 		APIVersion: fmt.Sprintf("%s/%s", aquasecurity.GroupName, starboard.VulnerabilityReportsCRVersion),
 		Kind:       starboard.VulnerabilityReportKind,
-		Namespace:  options.Namespace,
+		Namespace:  owner.Namespace,
 		Selector: &labels.Set{
-			kube.LabelResourceKind: string(options.Kind),
-			kube.LabelResourceName: options.Name,
+			kube.LabelResourceKind: string(owner.Kind),
+			kube.LabelResourceName: owner.Name,
 		},
 	})
 	if err != nil {
@@ -84,8 +100,8 @@ func (r *Repository) GetVulnerabilitiesForWorkload(ctx context.Context, options 
 	}
 	for _, item := range reportList.Items {
 		if containerName, containerNameSpecified := item.Labels[kube.LabelContainerName]; containerNameSpecified {
-			reports = append(reports, ContainerImageScanReport{
-				Name:   fmt.Sprintf("Container %s", containerName),
+			reports = append(reports, NamedVulnerabilityReport{
+				Name:   containerName,
 				Report: *item.DeepCopy(),
 			})
 		}
@@ -98,14 +114,15 @@ func (r *Repository) GetVulnerabilitiesForWorkload(ctx context.Context, options 
 	return
 }
 
-func (r *Repository) GetConfigAudit(ctx context.Context, options kube.Object) (report *starboard.ConfigAuditReport, err error) {
+func (r *Repository) GetConfigAuditReport(ctx context.Context, owner kube.Object) (report *starboard.ConfigAuditReport, err error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
 		APIVersion: fmt.Sprintf("%s/%s", aquasecurity.GroupName, starboard.ConfigAuditReportCRVersion),
 		Kind:       starboard.ConfigAuditReportKind,
-		Namespace:  options.Namespace,
+		Namespace:  owner.Namespace,
 		Selector: &labels.Set{
-			kube.LabelResourceKind: string(options.Kind),
-			kube.LabelResourceName: options.Name,
+			kube.LabelResourceKind:      string(owner.Kind),
+			kube.LabelResourceName:      owner.Name,
+			kube.LabelResourceNamespace: owner.Namespace,
 		},
 	})
 	if err != nil {
@@ -178,8 +195,8 @@ func (r *Repository) GetKubeHunterReport(ctx context.Context) (report *starboard
 	return
 }
 
-func (r *Repository) structure(ul *unstructured.UnstructuredList, v interface{}) (err error) {
-	b, err := ul.MarshalJSON()
+func (r *Repository) structure(m json.Marshaler, v interface{}) (err error) {
+	b, err := m.MarshalJSON()
 	if err != nil {
 		return
 	}

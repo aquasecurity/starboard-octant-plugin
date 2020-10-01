@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/aquasecurity/starboard/pkg/kube"
@@ -51,17 +52,22 @@ func ResourceTabPrinter(request *service.PrintRequest) (tab plugin.TabResponse, 
 
 }
 
-func vulnerabilitiesTabPrinter(request *service.PrintRequest, workload kube.Object) (tabResponse plugin.TabResponse, err error) {
+func vulnerabilitiesTabPrinter(request *service.PrintRequest, workload kube.Object) (plugin.TabResponse, error) {
 	repository := model.NewRepository(request.DashboardClient)
-	reports, err := repository.GetVulnerabilitiesForWorkload(request.Context(), workload)
-	if err != nil {
-		return
+
+	_, err := repository.GetCustomResourceDefinitionByName(request.Context(), v1alpha1.VulnerabilityReportsCRName)
+	vulnerabilityReportsDefined := err == nil
+
+	var reports []model.NamedVulnerabilityReport
+	if vulnerabilityReportsDefined {
+		reports, err = repository.GetVulnerabilityReportsByOwner(request.Context(), workload)
+		if err != nil {
+			return plugin.TabResponse{}, err
+		}
 	}
 
-	tab := component.NewTabWithContents(vulnerabilities.NewReport(workload, reports))
-	tabResponse = plugin.TabResponse{Tab: tab}
-
-	return
+	tab := component.NewTabWithContents(vulnerabilities.NewReport(workload, vulnerabilityReportsDefined, reports))
+	return plugin.TabResponse{Tab: tab}, nil
 }
 
 func cisKubernetesBenchmarksTabPrinter(request *service.PrintRequest, node string) (tabResponse plugin.TabResponse, err error) {
@@ -77,39 +83,49 @@ func cisKubernetesBenchmarksTabPrinter(request *service.PrintRequest, node strin
 }
 
 // ResourcePrinter is called when Octant wants to print the details of the underlying resource.
-func ResourcePrinter(request *service.PrintRequest) (response plugin.PrintResponse, err error) {
+func ResourcePrinter(request *service.PrintRequest) (plugin.PrintResponse, error) {
 	if request.Object == nil {
-		err = errors.New("object is nil")
-		return
+		return plugin.PrintResponse{}, errors.New("object is nil")
+	}
+
+	workload, err := getWorkloadFromObject(request.Object)
+	if err != nil {
+		return plugin.PrintResponse{}, err
 	}
 
 	repository := model.NewRepository(request.DashboardClient)
 
-	workload, err := getWorkloadFromObject(request.Object)
-	if err != nil {
-		return
+	_, err = repository.GetCustomResourceDefinitionByName(request.Context(), v1alpha1.VulnerabilityReportsCRName)
+	vulnerabilityReportsDefined := err == nil
+
+	var summary *v1alpha1.VulnerabilitySummary
+	if vulnerabilityReportsDefined {
+		summary, err = repository.GetVulnerabilitiesSummary(request.Context(), workload)
+		if err != nil {
+			return plugin.PrintResponse{}, err
+		}
 	}
 
-	summary, err := repository.GetVulnerabilitiesSummary(request.Context(), workload)
-	if err != nil {
-		return
+	_, err = repository.GetCustomResourceDefinitionByName(request.Context(), v1alpha1.ConfigAuditReportCRName)
+	configAuditReportsDefined := err == nil
+
+	var configAuditReport *v1alpha1.ConfigAuditReport
+	if configAuditReportsDefined {
+		configAuditReport, err = repository.GetConfigAuditReport(request.Context(), workload)
+		if err != nil {
+			return plugin.PrintResponse{}, err
+		}
 	}
 
-	configAudit, err := repository.GetConfigAudit(request.Context(), workload)
-	if err != nil {
-		return
-	}
-
-	response = plugin.PrintResponse{
+	return plugin.PrintResponse{
 		Status: vulnerabilities.NewSummarySections(summary),
 		Items: []component.FlexLayoutItem{
 			{
 				Width: component.WidthFull,
-				View:  configaudit.NewReport(configAudit),
+				View:  configaudit.NewReport(workload, configAuditReportsDefined, configAuditReport),
 			},
 		},
-	}
-	return
+	}, nil
 }
 
 func getWorkloadFromObject(o runtime.Object) (workload kube.Object, err error) {
