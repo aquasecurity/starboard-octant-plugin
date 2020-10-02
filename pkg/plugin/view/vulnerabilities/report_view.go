@@ -71,7 +71,7 @@ func NewReport(workload kube.Object, vulnerabilityReportsDefined bool, reports [
 	for _, containerReport := range reports {
 		items = append(items, component.FlexLayoutItem{
 			Width: component.WidthThird,
-			View:  view.NewReportSummary(containerReport.Report.CreationTimestamp.Time),
+			View:  view.NewReportMetadata(containerReport.Report.ObjectMeta),
 		})
 
 		items = append(items, component.FlexLayoutItem{
@@ -86,7 +86,7 @@ func NewReport(workload kube.Object, vulnerabilityReportsDefined bool, reports [
 
 		items = append(items, component.FlexLayoutItem{
 			Width: component.WidthFull,
-			View:  createVulnerabilitiesTable(containerReport.Name, containerReport.Report),
+			View:  createVulnerabilitiesTable(containerReport.Name, containerReport.Report.Report),
 		})
 	}
 
@@ -95,15 +95,16 @@ func NewReport(workload kube.Object, vulnerabilityReportsDefined bool, reports [
 	return flexLayout
 }
 
-func createVulnerabilitiesTable(containerName string, report starboard.VulnerabilityReport) component.Component {
+func createVulnerabilitiesTable(containerName string, report starboard.VulnerabilityScanResult) component.Component {
+	imageRef := fmt.Sprintf("%s/%s:%s", report.Registry.Server, report.Artifact.Repository, report.Artifact.Tag)
 	table := component.NewTableWithRows(
-		fmt.Sprintf("Container %s", containerName), "There are no vulnerabilities!",
+		fmt.Sprintf("Container %s: %s", containerName, imageRef), "There are no vulnerabilities!",
 		component.NewTableCols("ID", "Severity", "Title", "Resource", "Installed Version", "Fixed Version"),
 		[]component.TableRow{})
 
-	sort.Stable(BySeverity{report.Report.Vulnerabilities})
+	sort.Stable(BySeverity{report.Vulnerabilities})
 
-	for _, vi := range report.Report.Vulnerabilities {
+	for _, vi := range report.Vulnerabilities {
 		tr := component.TableRow{
 			"ID":                getLinkComponent(vi),
 			"Severity":          component.NewText(fmt.Sprintf("%s", vi.Severity)),

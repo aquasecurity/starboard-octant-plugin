@@ -73,7 +73,7 @@ func NewReport(workload kube.Object, configAuditReportsDefined bool, report *sta
 	flexLayout.AddSections(component.FlexLayoutSection{
 		{
 			Width: component.WidthThird,
-			View:  view.NewReportSummary(report.GetCreationTimestamp().Time),
+			View:  view.NewReportMetadata(report.ObjectMeta),
 		},
 		{
 			Width: component.WidthThird,

@@ -1,10 +1,9 @@
 package view
 
 import (
-	"time"
-
 	sec "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func NewScannerSummary(scanner sec.Scanner) (c *component.Summary) {
@@ -27,14 +26,18 @@ func NewScannerSummary(scanner sec.Scanner) (c *component.Summary) {
 	return
 }
 
-// TODO Accept ObjectMeta to display other info such as labels
-func NewReportSummary(generatedAt time.Time) (c *component.Summary) {
-	c = component.NewSummary("Report Metadata")
+func NewReportMetadata(meta metav1.ObjectMeta) (c *component.Summary) {
+	c = component.NewSummary("Metadata")
 	sections := []component.SummarySection{
 		{
-			Header:  "Generated At",
-			Content: component.NewTimestamp(generatedAt),
+			Header:  "Age",
+			Content: component.NewTimestamp(meta.CreationTimestamp.Time),
 		},
+		{
+			Header:  "Labels",
+			Content: component.NewLabels(meta.Labels),
+		},
+		// TODO Add link to the Owner
 	}
 	c.Add(sections...)
 	return

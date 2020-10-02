@@ -7,7 +7,10 @@ import (
 	"sort"
 	"strings"
 
-	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity"
 	"k8s.io/apimachinery/pkg/labels"
@@ -23,10 +26,13 @@ const (
 	ClusterKind = "Cluster"
 )
 
+// Repository defines methods for accessing Kubernetes object.
 type Repository struct {
 	client service.Dashboard
 }
 
+// NewRepository constructs new Kubernetes objects repository
+// with the specified Kubernetes client provided by Octant extensions API.
 func NewRepository(client service.Dashboard) *Repository {
 	return &Repository{
 		client: client,
@@ -64,7 +70,7 @@ func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options kube
 	return vs, nil
 }
 
-func (r *Repository) GetCustomResourceDefinitionByName(ctx context.Context, name string) (*v1.CustomResourceDefinition, error) {
+func (r *Repository) GetCustomResourceDefinitionByName(ctx context.Context, name string) (*apiextensionsv1.CustomResourceDefinition, error) {
 	unstructuredResp, err := r.client.Get(ctx, store.Key{
 		APIVersion: "apiextensions.k8s.io/v1beta1",
 		Kind:       "CustomResourceDefinition",
@@ -73,31 +79,152 @@ func (r *Repository) GetCustomResourceDefinitionByName(ctx context.Context, name
 	if err != nil {
 		return nil, err
 	}
-	var crd v1.CustomResourceDefinition
+	var crd apiextensionsv1.CustomResourceDefinition
 	err = r.structure(unstructuredResp, &crd)
 	return &crd, err
 }
 
-func (r *Repository) GetVulnerabilityReportsByOwner(ctx context.Context, owner kube.Object) (reports []NamedVulnerabilityReport, err error) {
+// GetControllerOf returns the controller Object for the specified controlee Object.
+// Returns nil if there's no such controller.
+func (r *Repository) GetControllerOf(ctx context.Context, controlee kube.Object) (*kube.Object, error) {
+	var obj metav1.PartialObjectMetadata
+
+	unstructuredObj, err := r.client.Get(ctx, store.Key{
+		Kind:      string(controlee.Kind),
+		Name:      controlee.Name,
+		Namespace: controlee.Namespace,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("getting controlee: %w", err)
+	}
+
+	err = r.structure(unstructuredObj, &obj)
+	if err != nil {
+		return nil, fmt.Errorf("structuring controlee: %w", err)
+	}
+
+	controllerRef := metav1.GetControllerOf(&obj)
+	if controllerRef == nil {
+		return nil, nil
+	}
+
+	return &kube.Object{
+		Kind:      kube.Kind(controllerRef.Kind),
+		Name:      controllerRef.Name,
+		Namespace: controlee.Namespace,
+	}, nil
+}
+
+// GetReplicaSetForDeployment returns the active ReplicaSet Object for
+// the specified Deployment Object.
+func (r *Repository) GetReplicaSetForDeployment(ctx context.Context, object kube.Object) (*kube.Object, error) {
+	var deployment appsv1.Deployment
+	unstructuredDeployment, err := r.client.Get(ctx, store.Key{
+		APIVersion: "apps/v1",
+		Kind:       string(object.Kind),
+		Name:       object.Name,
+		Namespace:  object.Namespace,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("getting deployment: %w", err)
+	}
+
+	err = r.structure(unstructuredDeployment, &deployment)
+	if err != nil {
+		return nil, fmt.Errorf("structuring deployment: %w", err)
+	}
+
+	deploymentSelector, err := metav1.LabelSelectorAsMap(deployment.Spec.Selector)
+	if err != nil {
+		return nil, fmt.Errorf("mapping label selector: %w", err)
+	}
+	selector := labels.Set(deploymentSelector)
+
+	var replicaSetList appsv1.ReplicaSetList
+	unstructuredReplicaSetList, err := r.client.List(ctx, store.Key{
+		APIVersion: "apps/v1",
+		Kind:       string(kube.KindReplicaSet),
+		Namespace:  object.Namespace,
+		Selector:   &selector,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("listing replicasets: %w", err)
+	}
+	err = r.structure(unstructuredReplicaSetList, &replicaSetList)
+	if err != nil {
+		return nil, fmt.Errorf("structuring replicaset list: %w", err)
+	}
+
+	for _, replicaSet := range replicaSetList.Items {
+		if deployment.Annotations["deployment.kubernetes.io/revision"] !=
+			replicaSet.Annotations["deployment.kubernetes.io/revision"] {
+			continue
+		}
+		return &kube.Object{Kind: kube.KindReplicaSet,
+			Name:      replicaSet.Name,
+			Namespace: replicaSet.Namespace}, nil
+	}
+	return nil, nil
+}
+
+// GetVulnerabilityReportsByOwner returns VulnerabilityReports owned by
+// the specified Kubernetes object. The reports are named after container
+// names so we can sort them and render in predictable order.
+//
+// Note: If there are no VulnerabilityReports which are owned by the
+// specified Deployment, this method does an extra attempt to lookup
+// the VulnerabilityReports owned by its active ReplicaSet.
+// Similarly if there are no VulnerabilityReports owned by the specified
+// Pod it will lookup VulnerabilityReports owned by the Pod's controller.
+func (r *Repository) GetVulnerabilityReportsByOwner(ctx context.Context, owner kube.Object) ([]NamedVulnerabilityReport, error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
 		APIVersion: fmt.Sprintf("%s/%s", aquasecurity.GroupName, starboard.VulnerabilityReportsCRVersion),
 		Kind:       starboard.VulnerabilityReportKind,
 		Namespace:  owner.Namespace,
 		Selector: &labels.Set{
-			kube.LabelResourceKind: string(owner.Kind),
-			kube.LabelResourceName: owner.Name,
+			kube.LabelResourceKind:      string(owner.Kind),
+			kube.LabelResourceName:      owner.Name,
+			kube.LabelResourceNamespace: owner.Namespace,
 		},
 	})
 	if err != nil {
-		err = fmt.Errorf("listing vulnerabilities: %w", err)
-		return
+		return nil, fmt.Errorf("listing vulnerabilityreports: %w", err)
 	}
+
 	var reportList starboard.VulnerabilityReportList
 	err = r.structure(unstructuredList, &reportList)
 	if err != nil {
-		err = fmt.Errorf("unmarshalling JSON to VulnerabilityList: %w", err)
-		return
+		return nil, fmt.Errorf("structuring VulnerabilityReportList: %w", err)
 	}
+
+	// Even if there are no VulnerabilityReports directly owned by the given Deployment
+	// we are trying to get VulnerabilityReports owned by the active ReplicaSet.
+	if len(reportList.Items) == 0 && owner.Kind == kube.KindDeployment {
+		replicaSet, err := r.GetReplicaSetForDeployment(ctx, owner)
+		if err != nil {
+			return nil, fmt.Errorf("getting replicaset for deployment: %w", err)
+		}
+		if replicaSet == nil {
+			return []NamedVulnerabilityReport{}, nil
+		}
+		return r.GetVulnerabilityReportsByOwner(ctx, *replicaSet)
+	}
+
+	// If there are no VulnerabilityReports owned by the given Pod
+	// we are trying to get VulnerabilityReports owned by its controller.
+	if len(reportList.Items) == 0 && owner.Kind == kube.KindPod {
+		controller, err := r.GetControllerOf(ctx, owner)
+		if err != nil {
+			return nil, fmt.Errorf("getting replicaset for pod: %w", err)
+		}
+		if controller == nil {
+			return []NamedVulnerabilityReport{}, nil
+		}
+		return r.GetVulnerabilityReportsByOwner(ctx, *controller)
+	}
+
+	var reports []NamedVulnerabilityReport
+
 	for _, item := range reportList.Items {
 		if containerName, containerNameSpecified := item.Labels[kube.LabelContainerName]; containerNameSpecified {
 			reports = append(reports, NamedVulnerabilityReport{
@@ -111,7 +238,7 @@ func (r *Repository) GetVulnerabilityReportsByOwner(ctx context.Context, owner k
 		return strings.Compare(reports[i].Name, reports[j].Name) < 0
 	})
 
-	return
+	return reports, nil
 }
 
 func (r *Repository) GetConfigAuditReport(ctx context.Context, owner kube.Object) (*starboard.ConfigAuditReport, error) {
