@@ -44,7 +44,7 @@ func ResourceTabPrinter(request *service.PrintRequest) (tab plugin.TabResponse, 
 		kube.KindJob:
 		return vulnerabilitiesTabPrinter(request, workload)
 	case kube.KindNode:
-		return cisKubernetesBenchmarksTabPrinter(request, workload.Name)
+		return printKubernetesBenchmarkTab(request, workload.Name)
 	default:
 		err = fmt.Errorf("unrecognized workload kind: %s", workload.Kind)
 		return
@@ -70,16 +70,26 @@ func vulnerabilitiesTabPrinter(request *service.PrintRequest, workload kube.Obje
 	return plugin.TabResponse{Tab: tab}, nil
 }
 
-func cisKubernetesBenchmarksTabPrinter(request *service.PrintRequest, node string) (tabResponse plugin.TabResponse, err error) {
+// printKubernetesBenchmarkTab creates the CIS Kubernetes Benchmark TabResponse
+// for the specified node.
+func printKubernetesBenchmarkTab(request *service.PrintRequest, node string) (plugin.TabResponse, error) {
 	repository := model.NewRepository(request.DashboardClient)
-	report, err := repository.GetCISKubeBenchReport(request.Context(), node)
-	if err != nil {
-		return
+
+	_, err := repository.GetCustomResourceDefinitionByName(request.Context(), v1alpha1.CISKubeBenchReportCRName)
+	kubeBenchReportDefined := err == nil
+
+	var report *v1alpha1.CISKubeBenchReport
+
+	if kubeBenchReportDefined {
+		report, err = repository.GetCISKubeBenchReport(request.Context(), node)
+		if err != nil {
+			return plugin.TabResponse{}, nil
+		}
 	}
 
-	tab := component.NewTabWithContents(kubebench.NewReport(report))
-	tabResponse = plugin.TabResponse{Tab: tab}
-	return
+	return plugin.TabResponse{
+		Tab: component.NewTabWithContents(kubebench.NewReport(kubeBenchReportDefined, report)),
+	}, nil
 }
 
 // ResourcePrinter is called when Octant wants to print the details of the underlying resource.
