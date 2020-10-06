@@ -114,7 +114,7 @@ func (r *Repository) GetVulnerabilityReportsByOwner(ctx context.Context, owner k
 	return
 }
 
-func (r *Repository) GetConfigAuditReport(ctx context.Context, owner kube.Object) (report *starboard.ConfigAuditReport, err error) {
+func (r *Repository) GetConfigAuditReport(ctx context.Context, owner kube.Object) (*starboard.ConfigAuditReport, error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
 		APIVersion: fmt.Sprintf("%s/%s", aquasecurity.GroupName, starboard.ConfigAuditReportCRVersion),
 		Kind:       starboard.ConfigAuditReportKind,
@@ -126,21 +126,18 @@ func (r *Repository) GetConfigAuditReport(ctx context.Context, owner kube.Object
 		},
 	})
 	if err != nil {
-		err = fmt.Errorf("listing config audit reports: %w", err)
-		return
+		return nil, fmt.Errorf("listing config audit reports: %w", err)
 	}
 	if len(unstructuredList.Items) == 0 {
-		return
+		return nil, nil
 	}
 	var reportList starboard.ConfigAuditReportList
 	err = r.structure(unstructuredList, &reportList)
 	if err != nil {
-		err = fmt.Errorf("unmarshalling JSON to ConfigAuditReportList: %w", err)
-		return
+		return nil, fmt.Errorf("unmarshalling JSON to ConfigAuditReportList: %w", err)
 	}
 
-	report = reportList.Items[0].DeepCopy()
-	return
+	return reportList.Items[0].DeepCopy(), nil
 }
 
 func (r *Repository) GetCISKubeBenchReport(ctx context.Context, node string) (report *starboard.CISKubeBenchReport, err error) {
