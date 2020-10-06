@@ -70,18 +70,23 @@ func NewReport(workload kube.Object, vulnerabilityReportsDefined bool, reports [
 	var items []component.FlexLayoutItem
 	for _, containerReport := range reports {
 		items = append(items, component.FlexLayoutItem{
-			Width: component.WidthThird,
+			Width: component.WidthQuarter,
 			View:  view.NewReportSummary(containerReport.Report.CreationTimestamp.Time),
 		})
 
 		items = append(items, component.FlexLayoutItem{
-			Width: component.WidthThird,
+			Width: component.WidthQuarter,
 			View:  view.NewScannerSummary(containerReport.Report.Report.Scanner),
 		})
 
 		items = append(items, component.FlexLayoutItem{
-			Width: component.WidthThird,
+			Width: component.WidthQuarter,
 			View:  NewVulnerabilitiesSummary("Summary", containerReport.Report.Report.Summary),
+		})
+
+		items = append(items, component.FlexLayoutItem{
+			Width: component.WidthQuarter,
+			View:  NewSummaryChart(containerReport.Report.Report.Summary),
 		})
 
 		items = append(items, component.FlexLayoutItem{
@@ -137,4 +142,27 @@ func NewVulnerabilitiesSummary(title string, summary starboard.VulnerabilitySumm
 	}
 	c.Add(sections...)
 	return
+}
+
+func NewSummaryChart(summary starboard.VulnerabilitySummary) component.Component {
+	chart := component.NewDonutChart()
+	chart.SetLabels("CVE", "CVE")
+	chart.SetSegments([]component.DonutSegment{
+		{
+			Count:  summary.CriticalCount + summary.HighCount,
+			Status: component.NodeStatusError,
+		},
+		{
+			Count:  summary.MediumCount + summary.LowCount,
+			Status: component.NodeStatusWarning,
+		},
+		{
+			Count:  summary.UnknownCount,
+			Status: component.NodeStatusOK,
+		},
+	})
+
+	card := component.NewCard([]component.TitleComponent{})
+	card.SetBody(chart)
+	return card
 }
