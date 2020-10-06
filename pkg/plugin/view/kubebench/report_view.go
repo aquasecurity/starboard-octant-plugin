@@ -11,10 +11,33 @@ import (
 )
 
 // NewReport creates a new view component for displaying the specified CISKubeBenchReport.
-func NewReport(benchmark *starboard.CISKubeBenchReport) (flexLayout component.FlexLayout) {
+func NewReport(kubeBenchReportsDefined bool, report *starboard.CISKubeBenchReport) (flexLayout component.FlexLayout) {
 	flexLayout = *component.NewFlexLayout("CIS Kubernetes Benchmark")
 
-	if benchmark == nil {
+	if !kubeBenchReportsDefined {
+		flexLayout.AddSections(component.FlexLayoutSection{
+			{
+				Width: component.WidthFull,
+				View: component.NewMarkdownText(fmt.Sprintf(
+					"The `%[1]s` resource, which represents kube-bench reports, is not defined.\n"+
+						"> You can create this resource definition by running the [Starboard CLI][starboard-cli] init command:\n"+
+						"> ```\n"+
+						"> $ kubectl starboard init\n"+
+						"> ```\n"+
+						"or\n"+
+						"> ```\n"+
+						"> $ kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/kube/crd/ciskubebenchreports-crd.yaml\n"+
+						"> ```\n"+
+						"\n"+
+						"[starboard-cli]: https://github.com/aquasecurity/starboard#starboard-cli",
+					starboard.CISKubeBenchReportCRName,
+				)),
+			},
+		})
+		return
+	}
+
+	if report == nil {
 		flexLayout.AddSections(component.FlexLayoutSection{
 			{
 				Width: component.WidthFull,
@@ -32,9 +55,9 @@ func NewReport(benchmark *starboard.CISKubeBenchReport) (flexLayout component.Fl
 		return
 	}
 
-	uiSections := make([]component.FlexLayoutItem, len(benchmark.Report.Sections))
+	uiSections := make([]component.FlexLayoutItem, len(report.Report.Sections))
 
-	for i, section := range benchmark.Report.Sections {
+	for i, section := range report.Report.Sections {
 		uiSections[i] = component.FlexLayoutItem{
 			Width: component.WidthFull,
 			View:  createTableForSection(section),
@@ -44,15 +67,15 @@ func NewReport(benchmark *starboard.CISKubeBenchReport) (flexLayout component.Fl
 	uiSections = append([]component.FlexLayoutItem{
 		{
 			Width: component.WidthThird,
-			View:  view.NewReportSummary(benchmark.CreationTimestamp.Time),
+			View:  view.NewReportSummary(report.CreationTimestamp.Time),
 		},
 		{
 			Width: component.WidthThird,
-			View:  view.NewScannerSummary(benchmark.Report.Scanner),
+			View:  view.NewScannerSummary(report.Report.Scanner),
 		},
 		{
 			Width: component.WidthThird,
-			View:  NewCISKubeBenchSummary(benchmark.Report.Summary),
+			View:  NewCISKubeBenchSummary(report.Report.Summary),
 		},
 	}, uiSections...)
 
