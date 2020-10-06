@@ -3,6 +3,8 @@ package controller
 import (
 	"fmt"
 
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view/kubehunter"
 
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/model"
@@ -25,15 +27,22 @@ func buildRootViewForRequest(request service.Request) (*component.FlexLayout, er
 	flexLayout := component.NewFlexLayout("")
 
 	repository := model.NewRepository(request.DashboardClient())
-	report, err := repository.GetKubeHunterReport(request.Context())
-	if err != nil {
-		return nil, err
+
+	_, err := repository.GetCustomResourceDefinitionByName(request.Context(), v1alpha1.KubeHunterReportCRName)
+	kubeHunterReportsDefined := err == nil
+
+	var report *v1alpha1.KubeHunterReport
+	if kubeHunterReportsDefined {
+		report, err = repository.GetKubeHunterReport(request.Context())
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	flexLayout.AddSections(component.FlexLayoutSection{
 		{Width: component.WidthFull, View: component.NewMarkdownText(fmt.Sprintf("## Starboard"))},
 		{Width: component.WidthFull, View: component.NewMarkdownText(fmt.Sprintf("### Kube Hunter Report"))},
-		{Width: component.WidthFull, View: kubehunter.NewReport(report)},
+		{Width: component.WidthFull, View: kubehunter.NewReport(kubeHunterReportsDefined, report)},
 	})
 
 	return flexLayout, nil

@@ -1,6 +1,7 @@
 package kubehunter
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view"
@@ -9,9 +10,32 @@ import (
 )
 
 // NewReport creates a new view component for displaying the specified KubeHunterReport.
-func NewReport(report *starboard.KubeHunterReport) (flexLayout *component.FlexLayout) {
-
+func NewReport(kubeHunterReportsDefined bool, report *starboard.KubeHunterReport) (flexLayout *component.FlexLayout) {
 	flexLayout = component.NewFlexLayout("kube-hunter Report")
+
+	if !kubeHunterReportsDefined {
+		flexLayout.AddSections(component.FlexLayoutSection{
+			{
+				Width: component.WidthFull,
+				View: component.NewMarkdownText(fmt.Sprintf(
+					"The `%[1]s` resource, which represents kube-hunter reports, is not defined.\n"+
+						"> You can create this resource definition by running the [Starboard CLI][starboard-cli] init command:\n"+
+						"> ```\n"+
+						"> $ kubectl starboard init\n"+
+						"> ```\n"+
+						"or\n"+
+						"> ```\n"+
+						"> $ kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/kube/crd/kubehunterreports-crd.yaml\n"+
+						"> ```\n"+
+						"\n"+
+						"[starboard-cli]: https://github.com/aquasecurity/starboard#starboard-cli",
+					starboard.KubeHunterReportCRName,
+				)),
+			},
+		})
+		return
+	}
+
 	if report == nil {
 		flexLayout.AddSections(component.FlexLayoutSection{
 			{
