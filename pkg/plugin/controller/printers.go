@@ -120,15 +120,20 @@ func ResourcePrinter(request *service.PrintRequest) (plugin.PrintResponse, error
 	configAuditReportsDefined := err == nil
 
 	var configAuditReport *v1alpha1.ConfigAuditReport
+	var configAuditSummary *v1alpha1.ConfigAuditSummary
 	if configAuditReportsDefined {
 		configAuditReport, err = repository.GetConfigAuditReport(request.Context(), workload)
 		if err != nil {
 			return plugin.PrintResponse{}, err
 		}
+		if configAuditReport != nil {
+			configAuditSummary = &configAuditReport.Report.Summary
+		}
 	}
 
 	return plugin.PrintResponse{
 		Status: vulnerabilities.NewSummarySections(summary),
+		Config: configaudit.NewSummarySections(configAuditSummary),
 		Items: []component.FlexLayoutItem{
 			{
 				Width: component.WidthFull,
