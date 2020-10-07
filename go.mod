@@ -5,7 +5,7 @@ go 1.15
 require (
 	github.com/aquasecurity/starboard v0.5.0
 	github.com/stretchr/testify v1.6.1
-	github.com/vmware-tanzu/octant v0.16.0
+	github.com/vmware-tanzu/octant v0.15.0
 	k8s.io/api v0.19.2
 	k8s.io/apiextensions-apiserver v0.19.2
 	k8s.io/apimachinery v0.19.2
