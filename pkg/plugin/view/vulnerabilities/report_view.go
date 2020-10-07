@@ -68,25 +68,27 @@ func NewReport(workload kube.Object, vulnerabilityReportsDefined bool, reports [
 	}
 
 	var items []component.FlexLayoutItem
-	for _, containerReport := range reports {
+	for _, namedReport := range reports {
+		report := namedReport.Report
+		result := report.Report
 		items = append(items, component.FlexLayoutItem{
 			Width: component.WidthThird,
-			View:  view.NewReportMetadata(containerReport.Report.ObjectMeta),
+			View:  view.NewReportMetadata(report.ObjectMeta),
 		})
 
 		items = append(items, component.FlexLayoutItem{
 			Width: component.WidthThird,
-			View:  view.NewScannerSummary(containerReport.Report.Report.Scanner),
+			View:  view.NewScannerSummary(result.Scanner),
 		})
 
 		items = append(items, component.FlexLayoutItem{
 			Width: component.WidthThird,
-			View:  NewVulnerabilitiesSummary("Summary", containerReport.Report.Report.Summary),
+			View:  NewVulnerabilitiesSummary("Summary", result.Summary),
 		})
 
 		items = append(items, component.FlexLayoutItem{
 			Width: component.WidthFull,
-			View:  createVulnerabilitiesTable(containerReport.Name, containerReport.Report.Report),
+			View:  createVulnerabilitiesTable(namedReport.Name, result),
 		})
 	}
 
