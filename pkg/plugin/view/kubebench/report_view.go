@@ -67,7 +67,7 @@ func NewReport(kubeBenchReportsDefined bool, report *starboard.CISKubeBenchRepor
 	uiSections = append([]component.FlexLayoutItem{
 		{
 			Width: component.WidthThird,
-			View:  view.NewReportSummary(report.CreationTimestamp.Time),
+			View:  view.NewReportMetadata(report.ObjectMeta),
 		},
 		{
 			Width: component.WidthThird,

@@ -68,25 +68,27 @@ func NewReport(workload kube.Object, vulnerabilityReportsDefined bool, reports [
 	}
 
 	var items []component.FlexLayoutItem
-	for _, containerReport := range reports {
+	for _, namedReport := range reports {
+		report := namedReport.Report
+		result := report.Report
 		items = append(items, component.FlexLayoutItem{
 			Width: component.WidthThird,
-			View:  view.NewReportSummary(containerReport.Report.CreationTimestamp.Time),
+			View:  view.NewReportMetadata(report.ObjectMeta),
 		})
 
 		items = append(items, component.FlexLayoutItem{
 			Width: component.WidthThird,
-			View:  view.NewScannerSummary(containerReport.Report.Report.Scanner),
+			View:  view.NewScannerSummary(result.Scanner),
 		})
 
 		items = append(items, component.FlexLayoutItem{
 			Width: component.WidthThird,
-			View:  NewVulnerabilitiesSummary("Summary", containerReport.Report.Report.Summary),
+			View:  NewVulnerabilitiesSummary("Summary", result.Summary),
 		})
 
 		items = append(items, component.FlexLayoutItem{
 			Width: component.WidthFull,
-			View:  createVulnerabilitiesTable(containerReport.Name, containerReport.Report),
+			View:  createVulnerabilitiesTable(namedReport.Name, result),
 		})
 	}
 
@@ -95,15 +97,16 @@ func NewReport(workload kube.Object, vulnerabilityReportsDefined bool, reports [
 	return flexLayout
 }
 
-func createVulnerabilitiesTable(containerName string, report starboard.VulnerabilityReport) component.Component {
+func createVulnerabilitiesTable(containerName string, report starboard.VulnerabilityScanResult) component.Component {
+	imageRef := fmt.Sprintf("%s/%s:%s", report.Registry.Server, report.Artifact.Repository, report.Artifact.Tag)
 	table := component.NewTableWithRows(
-		fmt.Sprintf("Container %s", containerName), "There are no vulnerabilities!",
+		fmt.Sprintf("Container %s: %s", containerName, imageRef), "There are no vulnerabilities!",
 		component.NewTableCols("ID", "Severity", "Title", "Resource", "Installed Version", "Fixed Version"),
 		[]component.TableRow{})
 
-	sort.Stable(BySeverity{report.Report.Vulnerabilities})
+	sort.Stable(BySeverity{report.Vulnerabilities})
 
-	for _, vi := range report.Report.Vulnerabilities {
+	for _, vi := range report.Vulnerabilities {
 		tr := component.TableRow{
 			"ID":                getLinkComponent(vi),
 			"Severity":          component.NewText(fmt.Sprintf("%s", vi.Severity)),

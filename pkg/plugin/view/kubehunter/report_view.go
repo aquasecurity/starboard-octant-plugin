@@ -57,7 +57,7 @@ func NewReport(kubeHunterReportsDefined bool, report *starboard.KubeHunterReport
 	flexLayout.AddSections(component.FlexLayoutSection{
 		{
 			Width: component.WidthThird,
-			View:  view.NewReportSummary(report.CreationTimestamp.Time),
+			View:  view.NewReportMetadata(report.ObjectMeta),
 		},
 		{
 			Width: component.WidthThird,
