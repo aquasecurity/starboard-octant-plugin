@@ -20,5 +20,5 @@ jobs:
       - name: Release snapshot
         uses: goreleaser/goreleaser-action@v2
         with:
-          verson: v0.143.0
+          verson: v0.145.0
           args: release --snapshot --skip-publish --rm-dist
