@@ -138,7 +138,7 @@ func createChecksTable(checks []starboard.Check) component.Component {
 	return table
 }
 
-func NewSummary(report starboard.ConfigAudit) (summaryComponent *component.Summary) {
+func NewSummary(report starboard.ConfigAuditResult) (summaryComponent *component.Summary) {
 	sections := []component.SummarySection{
 		{Header: "danger", Content: component.NewText(strconv.Itoa(report.Summary.DangerCount))},
 		{Header: "warning", Content: component.NewText(strconv.Itoa(report.Summary.WarningCount))},
