@@ -25,7 +25,7 @@ func NewReport(kubeHunterReportsDefined bool, report *starboard.KubeHunterReport
 						"> ```\n"+
 						"or\n"+
 						"> ```\n"+
-						"> $ kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/kube/crd/kubehunterreports-crd.yaml\n"+
+						"> $ kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/crd/kubehunterreports.crd.yaml\n"+
 						"> ```\n"+
 						"\n"+
 						"[starboard-cli]: https://github.com/aquasecurity/starboard#starboard-cli",
@@ -44,7 +44,7 @@ func NewReport(kubeHunterReportsDefined bool, report *starboard.KubeHunterReport
 					"> Note that [kube-hunter] reports are represented by instances of the `kubehunterreports.aquasecurity.github.io` resource.\n" +
 					"> You can create such a report by running [kube-hunter] with [Starboard CLI][starboard-cli]:\n" +
 					"> ```\n" +
-					"> $ starboard kube-hunter\n" +
+					"> $ kubectl starboard scan kubehunterreports\n" +
 					"> ```\n" +
 					"\n" +
 					"[kube-hunter]: https://github.com/aquasecurity/kube-hunter\n" +

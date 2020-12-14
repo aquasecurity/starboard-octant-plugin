@@ -3,11 +3,11 @@ package vulnerabilities
 import (
 	"strconv"
 
-	security "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 )
 
-func NewSummarySections(summary *security.VulnerabilitySummary) []component.SummarySection {
+func NewSummarySections(summary *v1alpha1.VulnerabilitySummary) []component.SummarySection {
 	if summary == nil {
 		return []component.SummarySection{}
 	}
