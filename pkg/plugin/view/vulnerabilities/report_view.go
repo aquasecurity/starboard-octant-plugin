@@ -6,13 +6,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/aquasecurity/starboard/pkg/kube"
-
-	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view"
-
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/model"
-
-	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view"
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 )
 
@@ -32,11 +29,11 @@ func NewReport(workload kube.Object, vulnerabilityReportsDefined bool, reports [
 						"> ```\n"+
 						"or\n"+
 						"> ```\n"+
-						"> $ kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/kube/crd/vulnerabilityreports-crd.yaml\n"+
+						"> $ kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/crd/vulnerabilityreports.crd.yaml\n"+
 						"> ```\n"+
 						"\n"+
 						"[starboard-cli]: https://github.com/aquasecurity/starboard#starboard-cli",
-					starboard.VulnerabilityReportsCRName,
+					v1alpha1.VulnerabilityReportsCRName,
 				)),
 			},
 		})
@@ -52,12 +49,12 @@ func NewReport(workload kube.Object, vulnerabilityReportsDefined bool, reports [
 						"> Note that vulnerability reports are represented by instances of the `%[1]s` resource.\n"+
 						"> You can create such reports by running [Trivy][trivy] with [Starboard CLI][starboard-cli]:\n"+
 						"> ```\n"+
-						"> $ kubectl starboard find vulnerabilities %[2]s/%[3]s --namespace %[4]s\n"+
+						"> $ kubectl starboard scan vulnerabilityreports %[2]s/%[3]s --namespace %[4]s\n"+
 						"> ```\n"+
 						"\n"+
 						"[trivy]: https://github.com/aquasecurity/trivy\n"+
 						"[starboard-cli]: https://github.com/aquasecurity/starboard#starboard-cli",
-					starboard.VulnerabilityReportsCRName,
+					v1alpha1.VulnerabilityReportsCRName,
 					strings.ToLower(string(workload.Kind)),
 					workload.Name,
 					workload.Namespace,
@@ -97,7 +94,7 @@ func NewReport(workload kube.Object, vulnerabilityReportsDefined bool, reports [
 	return flexLayout
 }
 
-func getImageRef(report starboard.VulnerabilityScanResult) string {
+func getImageRef(report v1alpha1.VulnerabilityScanResult) string {
 	imageID := report.Artifact.Tag
 	if imageID == "" {
 		imageID = report.Artifact.Digest
@@ -107,7 +104,7 @@ func getImageRef(report starboard.VulnerabilityScanResult) string {
 	return imageRef
 }
 
-func createVulnerabilitiesTable(containerName string, report starboard.VulnerabilityScanResult) component.Component {
+func createVulnerabilitiesTable(containerName string, report v1alpha1.VulnerabilityScanResult) component.Component {
 	table := component.NewTableWithRows(
 		fmt.Sprintf("Container %s: %s", containerName, getImageRef(report)), "There are no vulnerabilities!",
 		component.NewTableCols("ID", "Severity", "Title", "Resource", "Installed Version", "Fixed Version"),
@@ -134,7 +131,7 @@ func createVulnerabilitiesTable(containerName string, report starboard.Vulnerabi
 	return table
 }
 
-func getLinkComponent(v starboard.Vulnerability) component.Component {
+func getLinkComponent(v v1alpha1.Vulnerability) component.Component {
 	if v.PrimaryLink != "" {
 		return component.NewMarkdownText(view.ToMarkdownLink(v.VulnerabilityID, v.PrimaryLink))
 	}
@@ -144,7 +141,7 @@ func getLinkComponent(v starboard.Vulnerability) component.Component {
 	return component.NewText(v.VulnerabilityID)
 }
 
-func NewVulnerabilitiesSummary(title string, summary starboard.VulnerabilitySummary) *component.Summary {
+func NewVulnerabilitiesSummary(title string, summary v1alpha1.VulnerabilitySummary) *component.Summary {
 	sections := []component.SummarySection{
 		{Header: "CRITICAL ", Content: component.NewText(strconv.Itoa(summary.CriticalCount))},
 		{Header: "HIGH ", Content: component.NewText(strconv.Itoa(summary.HighCount))},

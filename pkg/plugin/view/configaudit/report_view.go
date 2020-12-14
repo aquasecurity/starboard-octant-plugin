@@ -6,14 +6,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/aquasecurity/starboard/pkg/kube"
-
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view"
-	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 )
 
-func NewReport(workload kube.Object, configAuditReportsDefined bool, report *starboard.ConfigAuditReport) (flexLayout *component.FlexLayout) {
+func NewReport(workload kube.Object, configAuditReportsDefined bool, report *v1alpha1.ConfigAuditReport) (flexLayout *component.FlexLayout) {
 	flexLayout = component.NewFlexLayout("")
 
 	flexLayout.AddSections(component.FlexLayoutSection{
@@ -35,11 +34,11 @@ func NewReport(workload kube.Object, configAuditReportsDefined bool, report *sta
 						"> ```\n"+
 						"or\n"+
 						"> ```\n"+
-						"> $ kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/kube/crd/configauditreports-crd.yaml\n"+
+						"> $ kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/crd/configauditreports.crd.yaml\n"+
 						"> ```\n"+
 						"\n"+
 						"[starboard-cli]: https://github.com/aquasecurity/starboard#starboard-cli",
-					starboard.ConfigAuditReportCRName,
+					v1alpha1.ConfigAuditReportCRName,
 				)),
 			},
 		})
@@ -55,12 +54,12 @@ func NewReport(workload kube.Object, configAuditReportsDefined bool, report *sta
 						"> Note that config audit reports are represented by instances of the `%[1]s` resource.\n"+
 						"> You can create such reports by running [Polaris][polaris] with [Starboard CLI][starboard-cli]:\n"+
 						"> ```\n"+
-						"> $ kubectl starboard polaris %[2]s/%[3]s --namespace %[4]s\n"+
+						"> $ kubectl starboard scan configauditreports %[2]s/%[3]s --namespace %[4]s\n"+
 						"> ```\n"+
 						"\n"+
 						"[polaris]: https://www.fairwinds.com/polaris\n"+
 						"[starboard-cli]: https://github.com/aquasecurity/starboard#starboard-cli",
-					starboard.ConfigAuditReportCRName,
+					v1alpha1.ConfigAuditReportCRName,
 					strings.ToLower(string(workload.Kind)),
 					workload.Name,
 					workload.Namespace,
@@ -111,13 +110,13 @@ func NewReport(workload kube.Object, configAuditReportsDefined bool, report *sta
 	return
 }
 
-func createCardComponent(title string, checks []starboard.Check) (x *component.Card) {
+func createCardComponent(title string, checks []v1alpha1.Check) (x *component.Card) {
 	x = component.NewCard(component.TitleFromString(title))
 	x.SetBody(createChecksTable(checks))
 	return x
 }
 
-func createChecksTable(checks []starboard.Check) component.Component {
+func createChecksTable(checks []v1alpha1.Check) component.Component {
 	table := component.NewTableWithRows(
 		"", "There are no checks!",
 		component.NewTableCols("Success", "ID", "Severity", "Category"),
@@ -138,7 +137,7 @@ func createChecksTable(checks []starboard.Check) component.Component {
 	return table
 }
 
-func NewSummary(report starboard.ConfigAuditResult) (summaryComponent *component.Summary) {
+func NewSummary(report v1alpha1.ConfigAuditResult) (summaryComponent *component.Summary) {
 	sections := []component.SummarySection{
 		{Header: "danger", Content: component.NewText(strconv.Itoa(report.Summary.DangerCount))},
 		{Header: "warning", Content: component.NewText(strconv.Itoa(report.Summary.WarningCount))},

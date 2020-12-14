@@ -5,13 +5,12 @@ import (
 	"strconv"
 
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view"
-
-	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 )
 
 // NewReport creates a new view component for displaying the specified CISKubeBenchReport.
-func NewReport(kubeBenchReportsDefined bool, report *starboard.CISKubeBenchReport) (flexLayout component.FlexLayout) {
+func NewReport(kubeBenchReportsDefined bool, report *v1alpha1.CISKubeBenchReport) (flexLayout component.FlexLayout) {
 	flexLayout = *component.NewFlexLayout("CIS Kubernetes Benchmark")
 
 	if !kubeBenchReportsDefined {
@@ -26,11 +25,11 @@ func NewReport(kubeBenchReportsDefined bool, report *starboard.CISKubeBenchRepor
 						"> ```\n"+
 						"or\n"+
 						"> ```\n"+
-						"> $ kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/kube/crd/ciskubebenchreports-crd.yaml\n"+
+						"> $ kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/crd/ciskubebenchreports.crd.yaml\n"+
 						"> ```\n"+
 						"\n"+
 						"[starboard-cli]: https://github.com/aquasecurity/starboard#starboard-cli",
-					starboard.CISKubeBenchReportCRName,
+					v1alpha1.CISKubeBenchReportCRName,
 				)),
 			},
 		})
@@ -45,7 +44,7 @@ func NewReport(kubeBenchReportsDefined bool, report *starboard.CISKubeBenchRepor
 					"> Note that [kube-bench] reports are represented by instances of the `ciskubebenchreports.aquasecurity.github.io` resource.\n" +
 					"> You can create such a report by running [kube-bench] with [Starboard CLI][starboard-cli]:\n" +
 					"> ```\n" +
-					"> $ starboard kube-bench\n" +
+					"> $ kubectl starboard scan ciskubebenchreports\n" +
 					"> ```\n" +
 					"\n" +
 					"[kube-bench]: https://github.com/aquasecurity/kube-bench\n" +
@@ -83,7 +82,7 @@ func NewReport(kubeBenchReportsDefined bool, report *starboard.CISKubeBenchRepor
 	return
 }
 
-func createTableForSection(section starboard.CISKubeBenchSection) component.Component {
+func createTableForSection(section v1alpha1.CISKubeBenchSection) component.Component {
 	table := component.NewTableWithRows(
 		fmt.Sprintf("%s %s", section.ID, section.Text), "There are no results!",
 		component.NewTableCols("Status", "Number", "Description", "Scored"),
@@ -105,7 +104,7 @@ func createTableForSection(section starboard.CISKubeBenchSection) component.Comp
 	return table
 }
 
-func NewCISKubeBenchSummary(summary starboard.CISKubeBenchSummary) (summaryComponent *component.Summary) {
+func NewCISKubeBenchSummary(summary v1alpha1.CISKubeBenchSummary) (summaryComponent *component.Summary) {
 	summaryComponent = component.NewSummary("Summary")
 
 	summaryComponent.Add([]component.SummarySection{

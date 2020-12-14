@@ -3,11 +3,11 @@ package configaudit
 import (
 	"strconv"
 
-	security "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 )
 
-func NewSummarySections(summary *security.ConfigAuditSummary) []component.SummarySection {
+func NewSummarySections(summary *v1alpha1.ConfigAuditSummary) []component.SummarySection {
 	if summary == nil {
 		return []component.SummarySection{}
 	}
