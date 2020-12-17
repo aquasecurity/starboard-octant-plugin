@@ -29,7 +29,7 @@ func NewReport(workload kube.Object, vulnerabilityReportsDefined bool, reports [
 						"> ```\n"+
 						"or\n"+
 						"> ```\n"+
-						"> $ kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/master/deploy/crd/vulnerabilityreports.crd.yaml\n"+
+						"> $ kubectl apply -f https://raw.githubusercontent.com/aquasecurity/starboard/main/deploy/crd/vulnerabilityreports.crd.yaml\n"+
 						"> ```\n"+
 						"\n"+
 						"[starboard-cli]: https://github.com/aquasecurity/starboard#starboard-cli",

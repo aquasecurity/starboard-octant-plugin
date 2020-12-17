@@ -2,7 +2,7 @@ name: build
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
 jobs:
   build:
@@ -20,5 +20,5 @@ jobs:
       - name: Release snapshot
         uses: goreleaser/goreleaser-action@v2
         with:
-          verson: v0.145.0
+          verson: v0.148.0
           args: release --snapshot --skip-publish --rm-dist
