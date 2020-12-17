@@ -200,7 +200,7 @@ This repository is available under the [Apache License 2.0][license].
 [release-action-img]: https://github.com/aquasecurity/starboard-octant-plugin/workflows/release/badge.svg
 [actions]: https://github.com/aquasecurity/starboard-octant-plugin/actions
 [license-img]: https://img.shields.io/github/license/aquasecurity/starboard-octant-plugin.svg
-[license]: https://github.com/aquasecurity/starboard-octant-plugin/blob/master/LICENSE
+[license]: https://github.com/aquasecurity/starboard-octant-plugin/blob/main/LICENSE
 [github-all-releases-img]: https://img.shields.io/github/downloads/aquasecurity/starboard-octant-plugin/total?logo=github
 
 [octant]: https://octant.dev/
