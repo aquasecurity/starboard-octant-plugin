@@ -137,21 +137,10 @@ func createChecksTable(checks []v1alpha1.Check) component.Component {
 	return table
 }
 
-func NewSummary(report v1alpha1.ConfigAuditResult) (summaryComponent *component.Summary) {
-	sections := []component.SummarySection{
-		{Header: "danger", Content: component.NewText(strconv.Itoa(report.Summary.DangerCount))},
+func NewSummary(report v1alpha1.ConfigAuditResult) *component.Summary {
+	return component.NewSummary("Summary", []component.SummarySection{
+		{Header: "pass", Content: component.NewText(strconv.Itoa(report.Summary.PassCount))},
 		{Header: "warning", Content: component.NewText(strconv.Itoa(report.Summary.WarningCount))},
-	}
-	sort.Stable(ByHeader(sections))
-
-	summaryComponent = component.NewSummary("Summary", sections...)
-
-	return
+		{Header: "danger", Content: component.NewText(strconv.Itoa(report.Summary.DangerCount))},
+	}...)
 }
-
-// ByHeader implements sort.Interface based on the Header field of SummarySection.
-type ByHeader []component.SummarySection
-
-func (a ByHeader) Len() int           { return len(a) }
-func (a ByHeader) Less(i, j int) bool { return a[i].Header < a[j].Header }
-func (a ByHeader) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }

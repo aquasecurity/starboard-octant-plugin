@@ -12,7 +12,8 @@ func NewSummarySections(summary *v1alpha1.ConfigAuditSummary) []component.Summar
 		return []component.SummarySection{}
 	}
 	return []component.SummarySection{
-		{Header: "Audit Risks", Content: component.NewText(strconv.Itoa(summary.DangerCount))},
-		{Header: "Audit Warnings", Content: component.NewText(strconv.Itoa(summary.WarningCount))},
+		{Header: "Passing Audit Checks", Content: component.NewText(strconv.Itoa(summary.PassCount))},
+		{Header: "Warning Audit Checks", Content: component.NewText(strconv.Itoa(summary.WarningCount))},
+		{Header: "Dangerous Audit Checks", Content: component.NewText(strconv.Itoa(summary.DangerCount))},
 	}
 }
