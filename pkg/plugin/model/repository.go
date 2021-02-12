@@ -7,19 +7,15 @@ import (
 	"sort"
 	"strings"
 
-	appsv1 "k8s.io/api/apps/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity"
-	"k8s.io/apimachinery/pkg/labels"
-
-	"github.com/aquasecurity/starboard/pkg/kube"
-
 	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 	"github.com/vmware-tanzu/octant/pkg/store"
+	appsv1 "k8s.io/api/apps/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 const (
@@ -241,7 +237,7 @@ func (r *Repository) GetVulnerabilityReportsByOwner(ctx context.Context, owner k
 	return reports, nil
 }
 
-func (r *Repository) GetConfigAuditReport(ctx context.Context, owner kube.Object) (*starboard.ConfigAuditReport, error) {
+func (r *Repository) GetConfigAuditReportByOwner(ctx context.Context, owner kube.Object) (*starboard.ConfigAuditReport, error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
 		APIVersion: fmt.Sprintf("%s/%s", aquasecurity.GroupName, starboard.ConfigAuditReportCRVersion),
 		Kind:       starboard.ConfigAuditReportKind,
@@ -253,8 +249,35 @@ func (r *Repository) GetConfigAuditReport(ctx context.Context, owner kube.Object
 		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("listing config audit reports: %w", err)
+		return nil, fmt.Errorf("listing configauditreports: %w", err)
 	}
+
+	// Even if there is no ConfigAuditReport directly owned by the given Deployment
+	// we are trying to get the ConfigAuditReport owned by the active ReplicaSet.
+	if len(unstructuredList.Items) == 0 && owner.Kind == kube.KindDeployment {
+		replicaSet, err := r.GetReplicaSetForDeployment(ctx, owner)
+		if err != nil {
+			return nil, fmt.Errorf("getting replicaset for deployment: %w", err)
+		}
+		if replicaSet == nil {
+			return nil, nil
+		}
+		return r.GetConfigAuditReportByOwner(ctx, *replicaSet)
+	}
+
+	// If there is no ConfigAuditReport owned by the given Pod
+	// we are trying to get the ConfigAuditReport owned by its controller.
+	if len(unstructuredList.Items) == 0 && owner.Kind == kube.KindPod {
+		controller, err := r.GetControllerOf(ctx, owner)
+		if err != nil {
+			return nil, fmt.Errorf("getting replicaset for pod: %w", err)
+		}
+		if controller == nil {
+			return nil, nil
+		}
+		return r.GetConfigAuditReportByOwner(ctx, *controller)
+	}
+
 	if len(unstructuredList.Items) == 0 {
 		return nil, nil
 	}

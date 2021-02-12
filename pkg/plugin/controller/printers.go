@@ -4,21 +4,17 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
-	"k8s.io/apimachinery/pkg/runtime"
-
-	"github.com/aquasecurity/starboard/pkg/kube"
-
+	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/model"
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view/configaudit"
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view/kubebench"
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view/vulnerabilities"
-
-	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/model"
-
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/vmware-tanzu/octant/pkg/plugin"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ResourceTabPrinter is called when Octant wants to add new tab for the underlying resource.
@@ -122,7 +118,7 @@ func ResourcePrinter(request *service.PrintRequest) (plugin.PrintResponse, error
 	var configAuditReport *v1alpha1.ConfigAuditReport
 	var configAuditSummary *v1alpha1.ConfigAuditSummary
 	if configAuditReportsDefined {
-		configAuditReport, err = repository.GetConfigAuditReport(request.Context(), workload)
+		configAuditReport, err = repository.GetConfigAuditReportByOwner(request.Context(), workload)
 		if err != nil {
 			return plugin.PrintResponse{}, err
 		}
