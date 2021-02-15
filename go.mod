@@ -3,7 +3,7 @@ module github.com/aquasecurity/starboard-octant-plugin
 go 1.15
 
 require (
-	github.com/aquasecurity/starboard v0.9.0
+	github.com/aquasecurity/starboard v0.9.2
 	github.com/stretchr/testify v1.7.0
 	github.com/vmware-tanzu/octant v0.16.3
 	k8s.io/api v0.19.2
