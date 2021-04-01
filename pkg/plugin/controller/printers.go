@@ -17,16 +17,46 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-// ResourceTabPrinter is called when Octant wants to add new tab for the underlying resource.
-func ResourceTabPrinter(request *service.PrintRequest) (tab plugin.TabResponse, err error) {
+// PrimaryResourceTabPrinter is called when Octant wants to add a new tab for the underlying resource.
+// For built-in K8s workloads the first tab renders a v1alpha1.VulnerabilityReport associated with each
+// container, whereas for K8s Nodes it renders the v1alpha1.CISKubeBenchReport.
+func PrimaryResourceTabPrinter(request *service.PrintRequest) (plugin.TabResponse, error) {
 	if request.Object == nil {
-		err = errors.New("request object is nil")
-		return
+		return plugin.TabResponse{}, errors.New("request object is nil")
+	}
+
+	object, err := getWorkloadFromObject(request.Object)
+	if err != nil {
+		return plugin.TabResponse{}, err
+	}
+
+	switch object.Kind {
+	case kube.KindPod,
+		kube.KindDeployment,
+		kube.KindDaemonSet,
+		kube.KindStatefulSet,
+		kube.KindReplicaSet,
+		kube.KindReplicationController,
+		kube.KindCronJob,
+		kube.KindJob:
+		return vulnerabilitiesTabPrinter(request, object)
+	case kube.KindNode:
+		return printKubernetesBenchmarkTab(request, object)
+	default:
+		return plugin.TabResponse{}, fmt.Errorf("unrecognized workload kind: %s", object.Kind)
+	}
+}
+
+// SecondaryResourceTabPrinter is called when Octant want to add new tab for the underlying resource.
+// For built-in K8s workloads the second tab renders the v1alpha1.ConfigAuditReport.
+func SecondaryResourceTabPrinter(request *service.PrintRequest) (plugin.TabResponse, error) {
+	if request.Object == nil {
+		return plugin.TabResponse{}, errors.New("request object is nil")
 	}
 
 	workload, err := getWorkloadFromObject(request.Object)
 	if err != nil {
-		return
+		return plugin.TabResponse{}, err
 	}
 
 	switch workload.Kind {
@@ -38,12 +68,10 @@ func ResourceTabPrinter(request *service.PrintRequest) (tab plugin.TabResponse, 
 		kube.KindReplicationController,
 		kube.KindCronJob,
 		kube.KindJob:
-		return vulnerabilitiesTabPrinter(request, workload)
-	case kube.KindNode:
-		return printKubernetesBenchmarkTab(request, workload.Name)
+		return configAuditTabPrinter(request, workload)
 	default:
-		err = fmt.Errorf("unrecognized workload kind: %s", workload.Kind)
-		return
+		//return plugin.TabResponse{}, fmt.Errorf("unrecognized workload kind: %s", workload.Kind)
+		return plugin.TabResponse{}, nil
 	}
 
 }
@@ -68,7 +96,7 @@ func vulnerabilitiesTabPrinter(request *service.PrintRequest, workload kube.Obje
 
 // printKubernetesBenchmarkTab creates the CIS Kubernetes Benchmark TabResponse
 // for the specified node.
-func printKubernetesBenchmarkTab(request *service.PrintRequest, node string) (plugin.TabResponse, error) {
+func printKubernetesBenchmarkTab(request *service.PrintRequest, node kube.Object) (plugin.TabResponse, error) {
 	repository := model.NewRepository(request.DashboardClient)
 
 	_, err := repository.GetCustomResourceDefinitionByName(request.Context(), v1alpha1.CISKubeBenchReportCRName)
@@ -77,7 +105,7 @@ func printKubernetesBenchmarkTab(request *service.PrintRequest, node string) (pl
 	var report *v1alpha1.CISKubeBenchReport
 
 	if kubeBenchReportDefined {
-		report, err = repository.GetCISKubeBenchReport(request.Context(), node)
+		report, err = repository.GetCISKubeBenchReport(request.Context(), node.Name)
 		if err != nil {
 			return plugin.TabResponse{}, nil
 		}
@@ -86,6 +114,15 @@ func printKubernetesBenchmarkTab(request *service.PrintRequest, node string) (pl
 	return plugin.TabResponse{
 		Tab: component.NewTabWithContents(kubebench.NewReport(kubeBenchReportDefined, report)),
 	}, nil
+}
+
+func configAuditTabPrinter(request *service.PrintRequest, workload kube.Object) (plugin.TabResponse, error) {
+	repository := model.NewRepository(request.DashboardClient)
+	report, err := repository.GetConfigAuditReportByOwner(request.Context(), workload)
+	if err != nil {
+		return plugin.TabResponse{}, err
+	}
+	return plugin.TabResponse{Tab: component.NewTabWithContents(configaudit.NewReport(workload, true, report))}, nil
 }
 
 // ResourcePrinter is called when Octant wants to print the details of the underlying resource.
@@ -130,12 +167,6 @@ func ResourcePrinter(request *service.PrintRequest) (plugin.PrintResponse, error
 	return plugin.PrintResponse{
 		Status: vulnerabilities.NewSummarySections(summary),
 		Config: configaudit.NewSummarySections(configAuditSummary),
-		Items: []component.FlexLayoutItem{
-			{
-				Width: component.WidthFull,
-				View:  configaudit.NewReport(workload, configAuditReportsDefined, configAuditReport),
-			},
-		},
 	}, nil
 }
 

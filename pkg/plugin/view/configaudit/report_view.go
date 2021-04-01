@@ -12,15 +12,8 @@ import (
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 )
 
-func NewReport(workload kube.Object, configAuditReportsDefined bool, report *v1alpha1.ConfigAuditReport) (flexLayout *component.FlexLayout) {
-	flexLayout = component.NewFlexLayout("")
-
-	flexLayout.AddSections(component.FlexLayoutSection{
-		{
-			Width: component.WidthFull,
-			View:  component.NewMarkdownText("#### Config Audit Reports"),
-		},
-	})
+func NewReport(workload kube.Object, configAuditReportsDefined bool, report *v1alpha1.ConfigAuditReport) (flexLayout component.FlexLayout) {
+	flexLayout = *component.NewFlexLayout("Configuration Audit")
 
 	if !configAuditReportsDefined {
 		flexLayout.AddSections(component.FlexLayoutSection{
@@ -119,15 +112,12 @@ func createCardComponent(title string, checks []v1alpha1.Check) (x *component.Ca
 func createChecksTable(checks []v1alpha1.Check) component.Component {
 	table := component.NewTableWithRows(
 		"", "There are no checks!",
-		component.NewTableCols("Success", "ID", "Severity", "Category"),
+		component.NewTableCols("ID", "Severity", "Category"),
 		[]component.TableRow{})
 
 	for _, c := range checks {
-		checkID := c.ID
-
 		tr := component.TableRow{
-			"Success":  component.NewText(strconv.FormatBool(c.Success)),
-			"ID":       component.NewText(checkID),
+			"ID":       CheckIDWithIcon(c),
 			"Severity": component.NewText(fmt.Sprintf("%s", c.Severity)),
 			"Category": component.NewText(c.Category),
 		}
@@ -135,6 +125,24 @@ func createChecksTable(checks []v1alpha1.Check) component.Component {
 	}
 
 	return table
+}
+
+func CheckIDWithIcon(check v1alpha1.Check) component.Component {
+	iconShape := "check-circle"
+	iconClass := "is-success"
+
+	if !check.Success && check.Severity == "warning" {
+		iconShape = "info-circle"
+		iconClass = "is-warning"
+	}
+	if !check.Success && check.Severity == "danger" {
+		iconShape = "exclamation-circle"
+		iconClass = "is-danger"
+	}
+
+	status := component.NewMarkdownText(fmt.Sprintf(`<clr-icon shape="%s" class="is-solid %s"></clr-icon>&nbsp;%s`, iconShape, iconClass, check.ID))
+	status.EnableTrustedContent()
+	return status
 }
 
 func NewSummary(report v1alpha1.ConfigAuditResult) *component.Summary {
