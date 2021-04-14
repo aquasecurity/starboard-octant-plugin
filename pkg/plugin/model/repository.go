@@ -8,8 +8,9 @@ import (
 	"strings"
 
 	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity"
-	starboard "github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
+	"github.com/aquasecurity/starboard/pkg/apis/aquasecurity/v1alpha1"
 	"github.com/aquasecurity/starboard/pkg/kube"
+	"github.com/aquasecurity/starboard/pkg/starboard"
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 	"github.com/vmware-tanzu/octant/pkg/store"
 	appsv1 "k8s.io/api/apps/v1"
@@ -38,11 +39,11 @@ func NewRepository(client service.Dashboard) *Repository {
 // NamedVulnerabilityReport allows sorting VulnerabilityReports by container name.
 type NamedVulnerabilityReport struct {
 	Name   string
-	Report starboard.VulnerabilityReport
+	Report v1alpha1.VulnerabilityReport
 }
 
-func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options kube.Object) (*starboard.VulnerabilitySummary, error) {
-	vs := &starboard.VulnerabilitySummary{}
+func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options kube.Object) (*v1alpha1.VulnerabilitySummary, error) {
+	vs := &v1alpha1.VulnerabilitySummary{}
 	containerReports, err := r.GetVulnerabilityReportsByOwner(ctx, options)
 	if err != nil {
 		return nil, err
@@ -50,13 +51,13 @@ func (r *Repository) GetVulnerabilitiesSummary(ctx context.Context, options kube
 	for _, cr := range containerReports {
 		for _, v := range cr.Report.Report.Vulnerabilities {
 			switch v.Severity {
-			case starboard.SeverityCritical:
+			case v1alpha1.SeverityCritical:
 				vs.CriticalCount++
-			case starboard.SeverityHigh:
+			case v1alpha1.SeverityHigh:
 				vs.HighCount++
-			case starboard.SeverityMedium:
+			case v1alpha1.SeverityMedium:
 				vs.MediumCount++
-			case starboard.SeverityLow:
+			case v1alpha1.SeverityLow:
 				vs.LowCount++
 			default:
 				vs.UnknownCount++
@@ -174,20 +175,20 @@ func (r *Repository) GetReplicaSetForDeployment(ctx context.Context, object kube
 // Pod it will lookup VulnerabilityReports owned by the Pod's controller.
 func (r *Repository) GetVulnerabilityReportsByOwner(ctx context.Context, owner kube.Object) ([]NamedVulnerabilityReport, error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
-		APIVersion: fmt.Sprintf("%s/%s", aquasecurity.GroupName, starboard.VulnerabilityReportsCRVersion),
-		Kind:       starboard.VulnerabilityReportKind,
+		APIVersion: fmt.Sprintf("%s/%s", aquasecurity.GroupName, v1alpha1.VulnerabilityReportsCRVersion),
+		Kind:       v1alpha1.VulnerabilityReportKind,
 		Namespace:  owner.Namespace,
 		Selector: &labels.Set{
-			kube.LabelResourceKind:      string(owner.Kind),
-			kube.LabelResourceName:      owner.Name,
-			kube.LabelResourceNamespace: owner.Namespace,
+			starboard.LabelResourceKind:      string(owner.Kind),
+			starboard.LabelResourceName:      owner.Name,
+			starboard.LabelResourceNamespace: owner.Namespace,
 		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("listing vulnerabilityreports: %w", err)
 	}
 
-	var reportList starboard.VulnerabilityReportList
+	var reportList v1alpha1.VulnerabilityReportList
 	err = r.structure(unstructuredList, &reportList)
 	if err != nil {
 		return nil, fmt.Errorf("structuring VulnerabilityReportList: %w", err)
@@ -222,7 +223,7 @@ func (r *Repository) GetVulnerabilityReportsByOwner(ctx context.Context, owner k
 	var reports []NamedVulnerabilityReport
 
 	for _, item := range reportList.Items {
-		if containerName, containerNameSpecified := item.Labels[kube.LabelContainerName]; containerNameSpecified {
+		if containerName, containerNameSpecified := item.Labels[starboard.LabelContainerName]; containerNameSpecified {
 			reports = append(reports, NamedVulnerabilityReport{
 				Name:   containerName,
 				Report: *item.DeepCopy(),
@@ -237,15 +238,15 @@ func (r *Repository) GetVulnerabilityReportsByOwner(ctx context.Context, owner k
 	return reports, nil
 }
 
-func (r *Repository) GetConfigAuditReportByOwner(ctx context.Context, owner kube.Object) (*starboard.ConfigAuditReport, error) {
+func (r *Repository) GetConfigAuditReportByOwner(ctx context.Context, owner kube.Object) (*v1alpha1.ConfigAuditReport, error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
-		APIVersion: fmt.Sprintf("%s/%s", aquasecurity.GroupName, starboard.ConfigAuditReportCRVersion),
-		Kind:       starboard.ConfigAuditReportKind,
+		APIVersion: fmt.Sprintf("%s/%s", aquasecurity.GroupName, v1alpha1.ConfigAuditReportCRVersion),
+		Kind:       v1alpha1.ConfigAuditReportKind,
 		Namespace:  owner.Namespace,
 		Selector: &labels.Set{
-			kube.LabelResourceKind:      string(owner.Kind),
-			kube.LabelResourceName:      owner.Name,
-			kube.LabelResourceNamespace: owner.Namespace,
+			starboard.LabelResourceKind:      string(owner.Kind),
+			starboard.LabelResourceName:      owner.Name,
+			starboard.LabelResourceNamespace: owner.Namespace,
 		},
 	})
 	if err != nil {
@@ -281,7 +282,7 @@ func (r *Repository) GetConfigAuditReportByOwner(ctx context.Context, owner kube
 	if len(unstructuredList.Items) == 0 {
 		return nil, nil
 	}
-	var reportList starboard.ConfigAuditReportList
+	var reportList v1alpha1.ConfigAuditReportList
 	err = r.structure(unstructuredList, &reportList)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshalling JSON to ConfigAuditReportList: %w", err)
@@ -290,13 +291,13 @@ func (r *Repository) GetConfigAuditReportByOwner(ctx context.Context, owner kube
 	return reportList.Items[0].DeepCopy(), nil
 }
 
-func (r *Repository) GetCISKubeBenchReport(ctx context.Context, node string) (report *starboard.CISKubeBenchReport, err error) {
+func (r *Repository) GetCISKubeBenchReport(ctx context.Context, node string) (report *v1alpha1.CISKubeBenchReport, err error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
-		APIVersion: fmt.Sprintf("%s/%s", aquasecurity.GroupName, starboard.CISKubeBenchReportCRVersion),
-		Kind:       starboard.CISKubeBenchReportKind,
+		APIVersion: fmt.Sprintf("%s/%s", aquasecurity.GroupName, v1alpha1.CISKubeBenchReportCRVersion),
+		Kind:       v1alpha1.CISKubeBenchReportKind,
 		Selector: &labels.Set{
-			kube.LabelResourceKind: string(kube.KindNode),
-			kube.LabelResourceName: node,
+			starboard.LabelResourceKind: string(kube.KindNode),
+			starboard.LabelResourceName: node,
 		},
 	})
 	if err != nil {
@@ -306,7 +307,7 @@ func (r *Repository) GetCISKubeBenchReport(ctx context.Context, node string) (re
 	if len(unstructuredList.Items) == 0 {
 		return
 	}
-	var reportList starboard.CISKubeBenchReportList
+	var reportList v1alpha1.CISKubeBenchReportList
 	err = r.structure(unstructuredList, &reportList)
 	if err != nil {
 		err = fmt.Errorf("unmarshalling JSON to CISKubernetesBenchmarkList: %w", err)
@@ -317,13 +318,13 @@ func (r *Repository) GetCISKubeBenchReport(ctx context.Context, node string) (re
 	return
 }
 
-func (r *Repository) GetKubeHunterReport(ctx context.Context) (report *starboard.KubeHunterReport, err error) {
+func (r *Repository) GetKubeHunterReport(ctx context.Context) (report *v1alpha1.KubeHunterReport, err error) {
 	unstructuredList, err := r.client.List(ctx, store.Key{
-		APIVersion: fmt.Sprintf("%s/%s", aquasecurity.GroupName, starboard.KubeHunterReportCRVersion),
-		Kind:       starboard.KubeHunterReportKind,
+		APIVersion: fmt.Sprintf("%s/%s", aquasecurity.GroupName, v1alpha1.KubeHunterReportCRVersion),
+		Kind:       v1alpha1.KubeHunterReportKind,
 		Selector: &labels.Set{
-			kube.LabelResourceKind: ClusterKind,
-			kube.LabelResourceName: "cluster",
+			starboard.LabelResourceKind: ClusterKind,
+			starboard.LabelResourceName: "cluster",
 		},
 	})
 	if err != nil {
@@ -332,7 +333,7 @@ func (r *Repository) GetKubeHunterReport(ctx context.Context) (report *starboard
 	if len(unstructuredList.Items) == 0 {
 		return
 	}
-	var reportList starboard.KubeHunterReportList
+	var reportList v1alpha1.KubeHunterReportList
 	err = r.structure(unstructuredList, &reportList)
 	if err != nil {
 		return
