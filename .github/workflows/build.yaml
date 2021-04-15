@@ -12,7 +12,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v1
         with:
-          go-version: 1.15
+          go-version: 1.16
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Run tests
@@ -20,5 +20,5 @@ jobs:
       - name: Release snapshot
         uses: goreleaser/goreleaser-action@v2
         with:
-          verson: v0.148.0
+          verson: v0.162.0
           args: release --snapshot --skip-publish --rm-dist
