@@ -152,7 +152,7 @@ func CheckIDWithIcon(check v1alpha1.Check) component.Component {
 	return status
 }
 
-func NewSummary(report v1alpha1.ConfigAuditResult) *component.Summary {
+func NewSummary(report v1alpha1.ConfigAuditReportData) *component.Summary {
 	return component.NewSummary("Summary", []component.SummarySection{
 		{Header: "pass", Content: component.NewText(strconv.Itoa(report.Summary.PassCount))},
 		{Header: "warning", Content: component.NewText(strconv.Itoa(report.Summary.WarningCount))},
