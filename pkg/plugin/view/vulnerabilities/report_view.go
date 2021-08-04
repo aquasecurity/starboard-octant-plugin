@@ -94,7 +94,7 @@ func NewReport(workload kube.Object, vulnerabilityReportsDefined bool, reports [
 	return flexLayout
 }
 
-func getImageRef(report v1alpha1.VulnerabilityScanResult) string {
+func getImageRef(report v1alpha1.VulnerabilityReportData) string {
 	imageID := report.Artifact.Tag
 	if imageID == "" {
 		imageID = report.Artifact.Digest
@@ -104,7 +104,7 @@ func getImageRef(report v1alpha1.VulnerabilityScanResult) string {
 	return imageRef
 }
 
-func createVulnerabilitiesTable(containerName string, report v1alpha1.VulnerabilityScanResult) component.Component {
+func createVulnerabilitiesTable(containerName string, report v1alpha1.VulnerabilityReportData) component.Component {
 	table := component.NewTableWithRows(
 		fmt.Sprintf("Container %s: %s", containerName, getImageRef(report)), "There are no vulnerabilities!",
 		component.NewTableCols("ID", "Severity", "Title", "Resource", "Installed Version", "Fixed Version"),
