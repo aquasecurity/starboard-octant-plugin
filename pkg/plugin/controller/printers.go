@@ -130,12 +130,34 @@ func ResourcePrinter(request *service.PrintRequest) (plugin.PrintResponse, error
 	return plugin.PrintResponse{
 		Status: vulnerabilities.NewSummarySections(summary),
 		Config: configaudit.NewSummarySections(configAuditSummary),
-		Items: []component.FlexLayoutItem{
-			{
-				Width: component.WidthFull,
-				View:  configaudit.NewReport(workload, configAuditReportsDefined, configAuditReport),
-			},
-		},
+	}, nil
+}
+
+func ResourceReportTabPrinter(request *service.PrintRequest) (plugin.TabResponse, error) {
+	if request.Object == nil {
+		return plugin.TabResponse{}, errors.New("object is nil")
+	}
+
+	workload, err := getWorkloadFromObject(request.Object)
+	if err != nil {
+		return plugin.TabResponse{}, err
+	}
+
+	repository := model.NewRepository(request.DashboardClient)
+
+	_, err = repository.GetCustomResourceDefinitionByName(request.Context(), v1alpha1.ConfigAuditReportCRName)
+	configAuditReportsDefined := err == nil
+
+	var configAuditReport *v1alpha1.ConfigAuditReport
+	if configAuditReportsDefined {
+		configAuditReport, err = repository.GetConfigAuditReportByOwner(request.Context(), workload)
+		if err != nil {
+			return plugin.TabResponse{}, err
+		}
+	}
+
+	return plugin.TabResponse{
+		Tab: component.NewTabWithContents(*configaudit.NewReport(workload, configAuditReportsDefined, configAuditReport)),
 	}, nil
 }
 

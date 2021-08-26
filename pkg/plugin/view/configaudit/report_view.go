@@ -13,12 +13,12 @@ import (
 )
 
 func NewReport(workload kube.Object, isConfigAuditReportsCRDefined bool, report *v1alpha1.ConfigAuditReport) *component.FlexLayout {
-	flexLayout := component.NewFlexLayout("")
+	flexLayout := component.NewFlexLayout("Audit Reports")
 
 	flexLayout.AddSections(component.FlexLayoutSection{
 		{
 			Width: component.WidthFull,
-			View:  component.NewMarkdownText("#### Config Audit Reports"),
+			View:  component.NewMarkdownText("#### Config"),
 		},
 	})
 

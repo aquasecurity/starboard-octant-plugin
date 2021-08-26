@@ -10,7 +10,7 @@ import (
 
 func GetOptions() []service.PluginOption {
 	return []service.PluginOption{
-		service.WithTabPrinter(controller.ResourceTabPrinter),
+		service.WithTabPrinter(controller.ResourceTabPrinter, controller.ResourceReportTabPrinter),
 		service.WithPrinter(controller.ResourcePrinter),
 		service.WithNavigation(
 			func(_ *service.NavigationRequest) (nav navigation.Navigation, err error) {
