@@ -19,3 +19,16 @@ func NewSummarySections(summary *v1alpha1.VulnerabilitySummary) []component.Summ
 		{Header: "Unknown Vulnerabilities", Content: component.NewText(strconv.Itoa(summary.UnknownCount))},
 	}
 }
+
+func NewSummaryStatus(summary *v1alpha1.VulnerabilitySummary) component.NodeStatus {
+	if summary == nil {
+		return component.NodeStatusOK
+	}
+	if summary.CriticalCount > 0 {
+		return component.NodeStatusError
+	}
+	if summary.HighCount > 0 {
+		return component.NodeStatusWarning
+	}
+	return component.NodeStatusOK
+}

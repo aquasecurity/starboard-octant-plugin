@@ -3,7 +3,6 @@ package controller
 import (
 	"errors"
 	"fmt"
-
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/model"
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view/configaudit"
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view/kubebench"
@@ -15,6 +14,7 @@ import (
 	"github.com/vmware-tanzu/octant/pkg/view/component"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
+	"strconv"
 )
 
 // ResourceTabPrinter is called when Octant wants to add new tab for the underlying resource.
@@ -158,6 +158,67 @@ func ResourceReportTabPrinter(request *service.PrintRequest) (plugin.TabResponse
 
 	return plugin.TabResponse{
 		Tab: component.NewTabWithContents(*configaudit.NewReport(workload, configAuditReportsDefined, configAuditReport)),
+	}, nil
+}
+
+// ResourceObjectStatus is called when Octant wants to determine the status (icon color) of an object
+func ResourceObjectStatus(request *service.PrintRequest) (plugin.ObjectStatusResponse, error) {
+	if request.Object == nil {
+		return plugin.ObjectStatusResponse{}, errors.New("object is nil")
+	}
+
+	workload, err := getWorkloadFromObject(request.Object)
+	if err != nil {
+		return plugin.ObjectStatusResponse{}, err
+	}
+
+	repository := model.NewRepository(request.DashboardClient)
+
+	_, err = repository.GetCustomResourceDefinitionByName(request.Context(), v1alpha1.VulnerabilityReportsCRName)
+	vulnerabilityReportsDefined := err == nil
+
+	var summary *v1alpha1.VulnerabilitySummary
+	if vulnerabilityReportsDefined {
+		summary, err = repository.GetVulnerabilitiesSummary(request.Context(), workload)
+		if err != nil {
+			return plugin.ObjectStatusResponse{}, err
+		}
+	}
+	// summary could be nil due to delays in fetching the CRDs
+	if summary == nil {
+		return plugin.ObjectStatusResponse{}, nil
+	}
+
+	status := vulnerabilities.NewSummaryStatus(summary)
+
+	return plugin.ObjectStatusResponse{
+		ObjectStatus: component.PodSummary{
+			Details: []component.Component{
+				component.NewLabels(map[string]string{
+					"Critical Vulnerabilities": strconv.Itoa(summary.CriticalCount),
+				}),
+				component.NewLabels(map[string]string{
+					"High Vulnerabilities": strconv.Itoa(summary.HighCount),
+				}),
+				component.NewLabels(map[string]string{
+					"Medium Vulnerabilities": strconv.Itoa(summary.MediumCount),
+				}),
+				component.NewLabels(map[string]string{
+					"Low Vulnerabilities": strconv.Itoa(summary.LowCount),
+				}),
+				component.NewLabels(map[string]string{
+					"Unknown Vulnerabilities": strconv.Itoa(summary.UnknownCount),
+				}),
+			},
+			Properties: []component.Property{
+				{Label: "Critical Vulnerabilities", Value: component.NewText(strconv.Itoa(summary.CriticalCount))},
+				{Label: "High Vulnerabilities", Value: component.NewText(strconv.Itoa(summary.HighCount))},
+				{Label: "Medium Vulnerabilities", Value: component.NewText(strconv.Itoa(summary.MediumCount))},
+				{Label: "Low Vulnerabilities", Value: component.NewText(strconv.Itoa(summary.LowCount))},
+				{Label: "Unknown Vulnerabilities", Value: component.NewText(strconv.Itoa(summary.UnknownCount))},
+			},
+			Status: status,
+		},
 	}, nil
 }
 

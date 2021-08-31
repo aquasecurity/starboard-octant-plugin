@@ -13,7 +13,7 @@ import (
 func TestCheckIDWithIcon(t *testing.T) {
 	testCases := []struct {
 		check                v1alpha1.Check
-		expectedMarkdownText string
+		expectedTextComponent *component.Text
 	}{
 		{
 			check: v1alpha1.Check{
@@ -21,7 +21,9 @@ func TestCheckIDWithIcon(t *testing.T) {
 				Success:  true,
 				Severity: "warning",
 			},
-			expectedMarkdownText: `<clr-icon shape="check-circle" class="is-solid is-success"></clr-icon>&nbsp;check-id`,
+			expectedTextComponent: component.NewText("check-id", func(t *component.Text) {
+				t.SetStatus(component.TextStatusOK)
+			}),
 		},
 		{
 			check: v1alpha1.Check{
@@ -29,7 +31,9 @@ func TestCheckIDWithIcon(t *testing.T) {
 				Success:  false,
 				Severity: "warning",
 			},
-			expectedMarkdownText: `<clr-icon shape="info-circle" class="is-solid is-warning"></clr-icon>&nbsp;check-id`,
+			expectedTextComponent: component.NewText("check-id", func(t *component.Text) {
+				t.SetStatus(component.TextStatusWarning)
+			}),
 		},
 		{
 			check: v1alpha1.Check{
@@ -37,7 +41,9 @@ func TestCheckIDWithIcon(t *testing.T) {
 				Success:  true,
 				Severity: "danger",
 			},
-			expectedMarkdownText: `<clr-icon shape="check-circle" class="is-solid is-success"></clr-icon>&nbsp;check-id`,
+			expectedTextComponent: component.NewText("check-id", func(t *component.Text) {
+				t.SetStatus(component.TextStatusOK)
+			}),
 		},
 		{
 			check: v1alpha1.Check{
@@ -45,15 +51,16 @@ func TestCheckIDWithIcon(t *testing.T) {
 				Success:  false,
 				Severity: "danger",
 			},
-			expectedMarkdownText: `<clr-icon shape="exclamation-circle" class="is-solid is-danger"></clr-icon>&nbsp;check-id`,
+			expectedTextComponent: component.NewText("check-id", func(t *component.Text) {
+				t.SetStatus(component.TextStatusError)
+			}),
 		},
 	}
 	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("Should return markdown text component for severity %s and success status %t", tc.check.Severity, tc.check.Success), func(t *testing.T) {
+		t.Run(fmt.Sprintf("Should return text component for severity %s and success status %t", tc.check.Severity, tc.check.Success), func(t *testing.T) {
 			c, ok := configaudit.CheckIDWithIcon(tc.check).(*component.Text)
 			assert.True(t, ok)
-			assert.True(t, c.TrustedContent())
-			assert.Equal(t, tc.expectedMarkdownText, c.Config.Text)
+			assert.Equal(t, tc.expectedTextComponent, c)
 		})
 	}
 }

@@ -40,6 +40,17 @@ func GetCapabilities() *plugin.Capabilities {
 			cronJobGVK,
 			jobGVK,
 		},
+		SupportsObjectStatus: []schema.GroupVersionKind{
+			podGVK,
+			deploymentGVK,
+			daemonSetGVK,
+			statefulSetGVK,
+			replicaSetGVK,
+			replicationControllerGVK,
+			cronJobGVK,
+			jobGVK,
+			nodeGVK,
+		},
 		IsModule: true,
 	}
 }
