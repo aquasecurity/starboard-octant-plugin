@@ -1,6 +1,7 @@
 package settings
 
 import (
+	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/actions"
 	"github.com/vmware-tanzu/octant/pkg/plugin"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -52,5 +53,6 @@ func GetCapabilities() *plugin.Capabilities {
 			nodeGVK,
 		},
 		IsModule: true,
+		ActionNames: []string{actions.StarboardKubeHunterScan},
 	}
 }
