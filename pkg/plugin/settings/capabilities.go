@@ -1,6 +1,7 @@
 package settings
 
 import (
+	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/actions"
 	"github.com/vmware-tanzu/octant/pkg/plugin"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -40,6 +41,18 @@ func GetCapabilities() *plugin.Capabilities {
 			cronJobGVK,
 			jobGVK,
 		},
+		SupportsObjectStatus: []schema.GroupVersionKind{
+			podGVK,
+			deploymentGVK,
+			daemonSetGVK,
+			statefulSetGVK,
+			replicaSetGVK,
+			replicationControllerGVK,
+			cronJobGVK,
+			jobGVK,
+			nodeGVK,
+		},
 		IsModule: true,
+		ActionNames: []string{actions.StarboardKubeHunterScan},
 	}
 }

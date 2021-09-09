@@ -13,12 +13,12 @@ import (
 )
 
 func NewReport(workload kube.Object, isConfigAuditReportsCRDefined bool, report *v1alpha1.ConfigAuditReport) *component.FlexLayout {
-	flexLayout := component.NewFlexLayout("")
+	flexLayout := component.NewFlexLayout("Audit Reports")
 
 	flexLayout.AddSections(component.FlexLayoutSection{
 		{
 			Width: component.WidthFull,
-			View:  component.NewMarkdownText("#### Config Audit Reports"),
+			View:  component.NewMarkdownText("#### Config"),
 		},
 	})
 
@@ -86,7 +86,7 @@ func NewReport(workload kube.Object, isConfigAuditReportsCRDefined bool, report 
 
 	var items []component.FlexLayoutItem
 	items = append(items, component.FlexLayoutItem{
-		Width: component.WidthThird,
+		Width: component.WidthHalf,
 		View:  createCardComponent("Pod Template", report.Report.PodChecks),
 	})
 
@@ -100,7 +100,7 @@ func NewReport(workload kube.Object, isConfigAuditReportsCRDefined bool, report 
 
 	for _, containerName := range containerNames {
 		items = append(items, component.FlexLayoutItem{
-			Width: component.WidthThird,
+			Width: component.WidthHalf,
 			View:  createCardComponent(fmt.Sprintf("Container %s", containerName), report.Report.ContainerChecks[containerName]),
 		})
 	}
@@ -131,25 +131,27 @@ func createChecksTable(checks []v1alpha1.Check) component.Component {
 		table.Add(tr)
 	}
 
+	sort.Slice(table.Rows(), func(i, j int) bool {
+		return table.Rows()[i]["ID"].(*component.Text).Config.Status > table.Rows()[j]["ID"].(*component.Text).Config.Status
+	})
+
 	return table
 }
 
 func CheckIDWithIcon(check v1alpha1.Check) component.Component {
-	iconShape := "check-circle"
-	iconClass := "is-success"
-
+	status := component.TextStatusOK
 	if !check.Success && check.Severity == "warning" {
-		iconShape = "info-circle"
-		iconClass = "is-warning"
+		status = component.TextStatusWarning
 	}
 	if !check.Success && check.Severity == "danger" {
-		iconShape = "exclamation-circle"
-		iconClass = "is-danger"
+		status = component.TextStatusError
 	}
 
-	status := component.NewMarkdownText(fmt.Sprintf(`<clr-icon shape="%s" class="is-solid %s"></clr-icon>&nbsp;%s`, iconShape, iconClass, check.ID))
-	status.EnableTrustedContent()
-	return status
+	text := component.NewText(check.ID, func(t *component.Text) {
+		t.SetStatus(status)
+	})
+
+	return text
 }
 
 func NewSummary(report v1alpha1.ConfigAuditReportData) *component.Summary {

@@ -2,6 +2,8 @@ package kubehunter
 
 import (
 	"fmt"
+	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/actions"
+	"github.com/vmware-tanzu/octant/pkg/action"
 	"strconv"
 
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/view"
@@ -49,6 +51,10 @@ func NewReport(kubeHunterReportsDefined bool, report *starboard.KubeHunterReport
 					"\n" +
 					"[kube-hunter]: https://github.com/aquasecurity/kube-hunter\n" +
 					"[starboard-cli]: https://github.com/aquasecurity/starboard#starboard-cli"),
+			},
+			{
+				Width: component.WidthHalf,
+				View:  component.NewButton("Start scan", action.Payload{"action": actions.StarboardKubeHunterScan}, component.WithButtonStyle(component.ButtonStyleSolid)),
 			},
 		})
 		return

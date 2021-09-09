@@ -1,6 +1,7 @@
 package settings
 
 import (
+	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/actions"
 	"strings"
 
 	"github.com/aquasecurity/starboard-octant-plugin/pkg/plugin/controller"
@@ -10,8 +11,10 @@ import (
 
 func GetOptions() []service.PluginOption {
 	return []service.PluginOption{
-		service.WithTabPrinter(controller.ResourceTabPrinter),
+		service.WithTabPrinter(controller.ResourceTabPrinter, controller.ResourceReportTabPrinter),
 		service.WithPrinter(controller.ResourcePrinter),
+		service.WithObjectStatus(controller.ResourceObjectStatus),
+		service.WithActionHandler(actions.ActionHandler),
 		service.WithNavigation(
 			func(_ *service.NavigationRequest) (nav navigation.Navigation, err error) {
 				nav = navigation.Navigation{

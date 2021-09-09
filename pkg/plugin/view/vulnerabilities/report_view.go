@@ -133,10 +133,10 @@ func createVulnerabilitiesTable(containerName string, report v1alpha1.Vulnerabil
 
 func getLinkComponent(v v1alpha1.Vulnerability) component.Component {
 	if v.PrimaryLink != "" {
-		return component.NewMarkdownText(view.ToMarkdownLink(v.VulnerabilityID, v.PrimaryLink))
+		return component.NewLink("", v.VulnerabilityID, v.PrimaryLink)
 	}
 	if len(v.Links) > 0 {
-		return component.NewMarkdownText(view.ToMarkdownLink(v.VulnerabilityID, v.Links[0]))
+		return component.NewLink("", v.VulnerabilityID, v.Links[0])
 	}
 	return component.NewText(v.VulnerabilityID)
 }
