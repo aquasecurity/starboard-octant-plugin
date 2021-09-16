@@ -2,6 +2,7 @@ package actions
 
 import (
 	"context"
+	"fmt"
 	"github.com/aquasecurity/starboard/pkg/generated/clientset/versioned"
 	"github.com/aquasecurity/starboard/pkg/kube"
 	"github.com/aquasecurity/starboard/pkg/kubehunter"
@@ -10,6 +11,7 @@ import (
 	"github.com/vmware-tanzu/octant/pkg/plugin/service"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
+	"os"
 	"time"
 )
 
@@ -38,6 +40,11 @@ func ActionHandler(request *service.ActionRequest) error {
 
 func startKubeHunterScan(ctx context.Context) error {
 	configFlags := genericclioptions.NewConfigFlags(true)
+	// TODO: Since DashboardClient does not provide a RESTConfig, don't scan if kubeconfigs are different
+	if *configFlags.KubeConfig != os.Getenv("KUBECONFIG") {
+		return fmt.Errorf("kubeconfig mismatch")
+	}
+
 	restconfig, err := configFlags.ToRESTConfig()
 	if err != nil {
 		return err

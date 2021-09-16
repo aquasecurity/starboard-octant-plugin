@@ -143,6 +143,10 @@ func ResourceReportTabPrinter(request *service.PrintRequest) (plugin.TabResponse
 		return plugin.TabResponse{}, err
 	}
 
+	if workload.Kind == kube.KindNode {
+		return plugin.TabResponse{}, nil
+	}
+
 	repository := model.NewRepository(request.DashboardClient)
 
 	_, err = repository.GetCustomResourceDefinitionByName(request.Context(), v1alpha1.ConfigAuditReportCRName)
