@@ -174,7 +174,7 @@ the latest kube-hunter report:
    The report displayed in the **Starboard** pane is equivalent of getting the `kubehunterreports` resource:
    
    ```
-   $ kubectl get kubehunerreports.aquasecurity.github.io \
+   $ kubectl get kubehunterreports.aquasecurity.github.io \
      --selector starboard.resource.kind=Cluster,starboard.resource.name=cluster \
      --output yaml
    ```
